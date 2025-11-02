@@ -1,0 +1,1621 @@
+# ThreadCraft - A Tailoring Business Management System
+## Requirements & Technical Specification Document
+
+**Version:** 1.0  
+**Date:** November 2, 2025  
+**Project Type:** Home-based Tailoring Business Management Web Application
+
+---
+
+## 1. Executive Summary
+
+A web-based application designed for a home-based tailoring business to manage client information, measurements, orders, and billing. The system will streamline the measurement recording process, order tracking, and financial calculations while maintaining a simple, user-friendly interface suitable for non-technical users.
+
+---
+
+## 2. Business Requirements
+
+### 2.1 Primary Objectives
+- Digitize client measurement records for easy retrieval and updates
+- Manage multiple orders per client with detailed requirements
+- Calculate order costs and generate bills
+- Replace paper-based record-keeping with a searchable digital system
+- Provide quick access to historical client data
+
+### 2.2 User Persona
+- **Primary User:** Home-based tailor (non-technical)
+- **Technical Proficiency:** Basic computer/tablet usage
+- **Usage Environment:** Home workshop, possibly with limited space
+- **Frequency:** Daily usage, multiple times per day
+- **Key Needs:** Quick data entry, easy search, minimal clicks
+
+---
+
+## 3. Functional Requirements
+
+### 3.1 Client Management Module
+
+#### 3.1.1 Client Registration
+**Priority:** P0 (Critical)
+
+**Features:**
+- Add new client with basic information
+- Required fields:
+  - Full Name
+  - Phone Number (primary contact)
+  - Secondary Phone (optional)
+  - Address (optional but recommended)
+  - Date of Registration (auto-captured)
+- Optional fields:
+  - Email
+  - Notes/Preferences
+- Unique client ID generation (auto-generated)
+- Duplicate detection based on phone number
+
+**Validation Rules:**
+- Phone number: 10 digits, numeric
+- Name: Required, minimum 2 characters
+- Prevent duplicate phone numbers with warning
+
+#### 3.1.2 Client Search & Listing
+**Priority:** P0 (Critical)
+
+**Features:**
+- Search by:
+  - Name (partial match, case-insensitive)
+  - Phone number
+  - Client ID
+- Display client list with:
+  - Name
+  - Phone number
+  - Last order date
+  - Number of active orders
+- Pagination (20 clients per page)
+- Sort by: Name, Last Order Date, Registration Date
+
+#### 3.1.3 Client Profile View
+**Priority:** P0 (Critical)
+
+**Features:**
+- View complete client details
+- Display all measurements
+- Show order history (all orders with status)
+- Edit client information
+- Quick action buttons:
+  - Add New Order
+  - Update Measurements
+  - View All Orders
+
+### 3.2 Measurement Management Module
+
+#### 3.2.1 Measurement Recording
+**Priority:** P0 (Critical)
+
+**Measurement Categories:**
+
+**For Shirt/Blouse:**
+- Length
+- Shoulder width
+- Sleeve length
+- Chest/Bust
+- Waist
+- Hip (for longer shirts)
+- Armhole
+- Neck
+- Front neck depth
+- Back neck depth
+- Additional notes field
+
+**For Churidar/Salwar:**
+- Top: Same as shirt measurements
+- Bottom (Churidar/Salwar):
+  - Length
+  - Waist
+  - Hip
+  - Thigh (for churidar)
+  - Bottom opening (for churidar)
+  - Knee (optional)
+- Dupatta: Length & Width
+
+**For Blouse:**
+- Length
+- Shoulder
+- Sleeve length
+- Bust
+- Waist
+- Underbust
+- Armhole
+- Neck (front & back)
+- Back opening depth
+- Princess cut measurements (if applicable)
+
+**For Pants/Trousers:**
+- Length
+- Waist
+- Hip
+- Thigh
+- Knee
+- Bottom opening
+- Rise (front & back)
+
+**For Skirt:**
+- Length
+- Waist
+- Hip
+- Bottom width (for flared skirts)
+
+**For Special Garments:**
+- Customizable field list
+- Template-based measurement sets
+
+**Features:**
+- Unit selection: Inches (default) or Centimeters
+- Decimal precision: Up to 0.5 increments
+- Measurement templates for quick entry
+- Last updated timestamp
+- Measurement history (version control)
+
+#### 3.2.2 Measurement Updates
+**Priority:** P1 (High)
+
+**Features:**
+- Edit existing measurements
+- Copy measurements from previous version
+- Compare current vs. previous measurements (side-by-side)
+- Add update notes/reason for change
+- Maintain measurement history (last 5 versions)
+- Warning if measurements changed significantly (>2 inches)
+
+### 3.3 Order Management Module
+
+#### 3.3.1 Create New Order
+**Priority:** P0 (Critical)
+
+**Order Information:**
+- Order ID (auto-generated: ORD-YYYYMMDD-XXXX)
+- Client selection (linked to client ID)
+- Order date (auto-captured)
+- Expected delivery date (user-defined)
+- Priority level: Normal, Urgent
+
+**Garment Details:**
+- Garment type (dropdown):
+  - Shirt
+  - Blouse
+  - Churidar Set
+  - Salwar Set
+  - Pants
+  - Skirt
+  - Lehenga
+  - Saree Blouse
+  - Kids Wear
+  - Custom/Other
+- Quantity
+- Fabric details:
+  - Type (Cotton, Silk, Synthetic, etc.)
+  - Client-provided or shop-provided
+  - Fabric measurements (if applicable)
+- Design reference:
+  - Text description
+  - Image upload (optional, for future)
+  - Reference number (if from catalog)
+- Special instructions/customization notes
+
+**Measurement Association:**
+- Use existing measurements (select measurement version)
+- Enter new measurements for this order
+- Quick measurement override for specific items
+
+#### 3.3.2 Order Listing & Tracking
+**Priority:** P0 (Critical)
+
+**Features:**
+- View all orders with filters:
+  - Status (Pending, In Progress, Completed, Delivered, Cancelled)
+  - Date range
+  - Client name
+  - Garment type
+  - Priority
+- Display columns:
+  - Order ID
+  - Client Name
+  - Garment Type
+  - Order Date
+  - Delivery Date
+  - Status
+  - Amount
+- Color coding for:
+  - Overdue orders (red)
+  - Due today (orange)
+  - Due this week (yellow)
+- Quick status update from list view
+- Bulk actions: Print multiple orders, Update status
+
+#### 3.3.3 Order Status Management
+**Priority:** P1 (High)
+
+**Status Workflow:**
+1. **Order Placed** (Initial state)
+   - Auto-set on order creation
+   
+2. **Fabric Received** (For client-provided fabric)
+   - Optional status
+   
+3. **Cutting Done**
+   - Intermediate stage
+   
+4. **Stitching in Progress**
+   - Active work state
+   
+5. **Trial Pending**
+   - Ready for fitting trial
+   
+6. **Alterations Required**
+   - Post-trial status
+   
+7. **Completed**
+   - Stitching finished
+   
+8. **Ready for Pickup**
+   - Final state before delivery
+   
+9. **Delivered**
+   - Order fulfilled
+   
+10. **Cancelled**
+    - Order cancelled (with reason)
+
+**Features:**
+- Status update with timestamp
+- Optional notes for each status change
+- Status history log
+- Automatic status-based notifications (future feature)
+
+### 3.4 Billing & Pricing Module
+
+#### 3.4.1 Cost Calculation
+**Priority:** P0 (Critical)
+
+**Pricing Components:**
+- Base stitching charges (per garment type)
+- Customization charges:
+  - Embroidery work
+  - Lining
+  - Piping
+  - Special designs
+  - Additional components (buttons, hooks, etc.)
+- Material charges (if provided by tailor)
+- Alteration charges
+- Urgent order surcharge (percentage or fixed)
+
+**Features:**
+- Predefined price templates for common garments
+- Line item addition (add/remove charge items)
+- Automatic subtotal calculation
+- Tax/GST calculation (optional, future)
+- Discount application:
+  - Fixed amount
+  - Percentage
+  - Reason for discount
+- Round-off to nearest rupee
+- Display: Subtotal, Discount, Final Amount
+
+#### 3.4.2 Payment Tracking
+**Priority:** P1 (High)
+
+**Features:**
+- Advance payment recording:
+  - Amount
+  - Date
+  - Payment method (Cash, UPI, Card, etc.)
+  - Receipt number (optional)
+- Balance calculation (Total - Advance)
+- Final payment recording
+- Payment history for each order
+- Payment status indicators:
+  - Not Paid
+  - Partially Paid
+  - Fully Paid
+- Outstanding balance alerts
+
+#### 3.4.3 Billing & Receipts
+**Priority:** P1 (High)
+
+**Features:**
+- Generate itemized bill:
+  - Business name/logo (configurable)
+  - Order details
+  - Client details
+  - Itemized charges
+  - Payment breakdown
+  - Balance due
+- Print-friendly format (A5/A6 size)
+- Receipt numbering system
+- PDF generation (future feature)
+- SMS receipt (future feature)
+
+### 3.5 Dashboard & Reports
+
+#### 3.5.1 Dashboard
+**Priority:** P1 (High)
+
+**Key Metrics:**
+- Orders today: New, In Progress, Completed
+- Orders this week
+- Orders pending delivery (grouped by date)
+- Overdue orders count
+- Revenue this month
+- Outstanding payments total
+
+**Quick Actions:**
+- Add New Client
+- Create New Order
+- Search Client
+- View Today's Deliveries
+
+**Widgets:**
+- Recent orders (last 10)
+- Upcoming deliveries (next 7 days)
+- Clients with pending orders
+- Payment reminders
+
+#### 3.5.2 Reports Module
+**Priority:** P2 (Medium)
+
+**Reports:**
+1. **Order Report:**
+   - Date range selection
+   - Filter by status, client, garment type
+   - Export as CSV/PDF
+   - Metrics: Total orders, completed, pending, cancelled
+
+2. **Revenue Report:**
+   - Daily/Weekly/Monthly/Custom date range
+   - Total revenue, advances, balance collected
+   - Payment method breakdown
+   - Garment type revenue distribution
+
+3. **Client Report:**
+   - Most frequent clients
+   - Client lifetime value
+   - New clients in period
+
+4. **Performance Report:**
+   - Average completion time by garment type
+   - On-time delivery percentage
+   - Orders per day/week/month trend
+
+---
+
+## 4. Non-Functional Requirements
+
+### 4.1 Performance
+- Page load time: < 2 seconds
+- Search results: < 1 second
+- Support up to 1000 clients, 5000 orders without degradation
+- Smooth operation on mid-range devices (tablets/laptops)
+
+### 4.2 Usability
+- Intuitive UI requiring minimal training
+- Large, touch-friendly buttons for tablet use
+- Clear visual hierarchy
+- Minimal clicks to complete tasks (max 3 clicks for common tasks)
+- Error messages in simple, actionable language
+- Confirmation dialogs for destructive actions
+
+### 4.3 Reliability
+- Auto-save for data entry forms
+- Data backup mechanism (export/import)
+- Graceful error handling
+- No data loss on browser refresh/crash
+
+### 4.4 Security
+- Local authentication (password/PIN protection)
+- Data encryption for sensitive information
+- Session timeout for inactive users
+- Role-based access (future: for assistants/staff)
+
+### 4.5 Compatibility
+- Modern browsers: Chrome, Firefox, Safari, Edge (latest 2 versions)
+- Responsive design: Desktop (1366x768+), Tablet (iPad size), Mobile (fallback)
+- Offline capability (future enhancement)
+
+### 4.6 Maintainability
+- Clean, documented code
+- Modular architecture for easy updates
+- Simple deployment process
+- Easy backup and restore procedures
+
+---
+
+## 5. Technical Architecture
+
+### 5.1 Technology Stack
+
+#### Frontend
+- **Framework:** React 18+
+- **UI Library:** Tailwind CSS + shadcn/ui components
+- **State Management:** React Context API / Zustand (lightweight)
+- **Form Handling:** React Hook Form
+- **Validation:** Zod
+- **Date Handling:** date-fns
+- **Icons:** Lucide React
+- **Routing:** React Router v6
+
+#### Backend/Database
+- **Local Storage:** IndexedDB (via Dexie.js)
+  - Structured database with indexing
+  - Supports complex queries
+  - Good performance for large datasets
+  - Offline-first capability
+  
+#### Alternative Options for Future:
+- **Phase 2 (Cloud Migration):**
+  - Backend: Node.js + Express / Python + FastAPI
+  - Database: PostgreSQL / MongoDB
+  - Hosting: Vercel/Netlify (frontend) + Railway/Render (backend)
+  - Authentication: JWT tokens
+  - API: RESTful or GraphQL
+
+### 5.2 Database Schema Design
+
+#### Collections/Tables:
+
+**1. Clients Table**
+```javascript
+{
+  id: "CLI-20251102-0001", // Primary Key
+  name: String, // Required
+  phoneNumber: String, // Required, Unique
+  secondaryPhone: String, // Optional
+  address: String,
+  email: String,
+  notes: String,
+  registrationDate: Date,
+  lastOrderDate: Date, // Updated automatically
+  totalOrders: Number, // Counter
+  createdAt: Timestamp,
+  updatedAt: Timestamp
+}
+```
+
+**2. Measurements Table**
+```javascript
+{
+  id: "MEAS-UUID", // Primary Key
+  clientId: String, // Foreign Key -> Clients
+  garmentType: String, // shirt, blouse, churidar, etc.
+  measurements: {
+    // Dynamic based on garment type
+    length: Number,
+    shoulder: Number,
+    sleeve: Number,
+    chest: Number,
+    waist: Number,
+    hip: Number,
+    // ... other measurements
+  },
+  unit: String, // "inches" or "cm"
+  notes: String,
+  version: Number, // Measurement version
+  isActive: Boolean, // Latest version flag
+  createdAt: Timestamp,
+  createdBy: String
+}
+```
+
+**3. Orders Table**
+```javascript
+{
+  id: "ORD-20251102-0001", // Primary Key
+  clientId: String, // Foreign Key -> Clients
+  clientName: String, // Denormalized for quick access
+  clientPhone: String, // Denormalized
+  
+  orderDate: Date,
+  deliveryDate: Date,
+  priority: String, // "normal" or "urgent"
+  
+  garmentType: String,
+  quantity: Number,
+  
+  fabricDetails: {
+    type: String,
+    providedBy: String, // "client" or "tailor"
+    measurements: String,
+    notes: String
+  },
+  
+  designDetails: {
+    description: String,
+    referenceNumber: String,
+    imageUrl: String // For future
+  },
+  
+  measurementId: String, // Foreign Key -> Measurements
+  measurementSnapshot: Object, // Copy of measurements at order time
+  
+  specialInstructions: String,
+  
+  status: String, // Enum: placed, fabric_received, cutting, stitching, trial, alterations, completed, ready, delivered, cancelled
+  statusHistory: [
+    {
+      status: String,
+      timestamp: Date,
+      notes: String
+    }
+  ],
+  
+  pricing: {
+    baseCharge: Number,
+    customizations: [
+      {
+        description: String,
+        amount: Number
+      }
+    ],
+    materialCharges: Number,
+    urgentCharges: Number,
+    subtotal: Number,
+    discount: {
+      amount: Number,
+      reason: String
+    },
+    total: Number
+  },
+  
+  payments: [
+    {
+      amount: Number,
+      date: Date,
+      method: String, // cash, upi, card, etc.
+      type: String, // "advance" or "final"
+      receiptNumber: String,
+      notes: String
+    }
+  ],
+  
+  totalPaid: Number,
+  balanceDue: Number,
+  paymentStatus: String, // "not_paid", "partially_paid", "fully_paid"
+  
+  createdAt: Timestamp,
+  updatedAt: Timestamp,
+  completedAt: Timestamp,
+  deliveredAt: Timestamp
+}
+```
+
+**4. Garment Templates Table**
+```javascript
+{
+  id: String, // Primary Key
+  name: String, // e.g., "Standard Shirt"
+  garmentType: String,
+  measurementFields: [
+    {
+      fieldName: String,
+      label: String,
+      required: Boolean,
+      defaultValue: Number
+    }
+  ],
+  defaultPrice: Number,
+  createdAt: Timestamp
+}
+```
+
+**5. Settings Table (Key-Value)**
+```javascript
+{
+  key: String, // Primary Key
+  value: Any,
+  updatedAt: Timestamp
+}
+// Examples:
+// businessName, businessAddress, phoneNumber, logo, gstNumber, defaultUnit, etc.
+```
+
+### 5.3 Application Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│                  React App                      │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  ┌──────────────────────────────────────────┐  │
+│  │         Presentation Layer               │  │
+│  │  (Components, Pages, UI)                 │  │
+│  │                                          │  │
+│  │  - Dashboard                             │  │
+│  │  - Client Management                     │  │
+│  │  - Order Management                      │  │
+│  │  - Measurements                          │  │
+│  │  - Billing                               │  │
+│  │  - Reports                               │  │
+│  └──────────────────────────────────────────┘  │
+│                      ↓↑                         │
+│  ┌──────────────────────────────────────────┐  │
+│  │       Business Logic Layer               │  │
+│  │  (Custom Hooks, Utils, Services)         │  │
+│  │                                          │  │
+│  │  - useClients()                          │  │
+│  │  - useOrders()                           │  │
+│  │  - useMeasurements()                     │  │
+│  │  - Validation Logic                      │  │
+│  │  - Calculation Services                  │  │
+│  └──────────────────────────────────────────┘  │
+│                      ↓↑                         │
+│  ┌──────────────────────────────────────────┐  │
+│  │         Data Access Layer                │  │
+│  │  (Database Service, IndexedDB)           │  │
+│  │                                          │  │
+│  │  - Dexie.js wrapper                      │  │
+│  │  - CRUD operations                       │  │
+│  │  - Query builders                        │  │
+│  │  - Transaction management                │  │
+│  └──────────────────────────────────────────┘  │
+│                      ↓↑                         │
+│  ┌──────────────────────────────────────────┐  │
+│  │           IndexedDB                      │  │
+│  │  (Browser Local Storage)                 │  │
+│  └──────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────┘
+```
+
+### 5.4 Component Structure
+
+```
+src/
+├── components/
+│   ├── ui/                      # shadcn/ui components
+│   │   ├── button.jsx
+│   │   ├── input.jsx
+│   │   ├── dialog.jsx
+│   │   ├── select.jsx
+│   │   └── ...
+│   ├── layout/
+│   │   ├── Navbar.jsx
+│   │   ├── Sidebar.jsx
+│   │   └── Layout.jsx
+│   ├── clients/
+│   │   ├── ClientForm.jsx
+│   │   ├── ClientList.jsx
+│   │   ├── ClientCard.jsx
+│   │   └── ClientSearch.jsx
+│   ├── measurements/
+│   │   ├── MeasurementForm.jsx
+│   │   ├── MeasurementDisplay.jsx
+│   │   └── MeasurementHistory.jsx
+│   ├── orders/
+│   │   ├── OrderForm.jsx
+│   │   ├── OrderList.jsx
+│   │   ├── OrderCard.jsx
+│   │   ├── OrderDetails.jsx
+│   │   └── StatusTracker.jsx
+│   ├── billing/
+│   │   ├── PricingForm.jsx
+│   │   ├── PaymentForm.jsx
+│   │   ├── InvoicePreview.jsx
+│   │   └── PaymentHistory.jsx
+│   └── dashboard/
+│       ├── StatsCard.jsx
+│       ├── RecentOrders.jsx
+│       └── UpcomingDeliveries.jsx
+│
+├── pages/
+│   ├── Dashboard.jsx
+│   ├── Clients.jsx
+│   ├── ClientDetails.jsx
+│   ├── Orders.jsx
+│   ├── OrderDetails.jsx
+│   ├── NewOrder.jsx
+│   ├── Reports.jsx
+│   └── Settings.jsx
+│
+├── hooks/
+│   ├── useClients.js
+│   ├── useOrders.js
+│   ├── useMeasurements.js
+│   ├── usePayments.js
+│   └── useSearch.js
+│
+├── services/
+│   ├── database.js              # Dexie.js setup
+│   ├── clientService.js
+│   ├── orderService.js
+│   ├── measurementService.js
+│   ├── billingService.js
+│   └── exportService.js
+│
+├── utils/
+│   ├── calculations.js
+│   ├── validation.js
+│   ├── formatters.js
+│   ├── dateHelpers.js
+│   └── constants.js
+│
+├── context/
+│   ├── AppContext.jsx           # Global state
+│   └── ThemeContext.jsx
+│
+├── App.jsx
+└── main.jsx
+```
+
+### 5.5 Key Technical Decisions
+
+#### Why IndexedDB (via Dexie.js)?
+1. **Structured Data:** Supports complex queries and indexes
+2. **Performance:** Much faster than localStorage for large datasets
+3. **Storage Capacity:** Can store several hundred MB (vs 5-10MB for localStorage)
+4. **Offline-First:** Works completely offline
+5. **Transaction Support:** ACID compliance for data integrity
+6. **Easy Migration Path:** Can sync to cloud backend later
+
+#### Why React?
+1. **Component Reusability:** Build once, use everywhere
+2. **Large Ecosystem:** Many libraries and tools available
+3. **Easy to Learn:** Good documentation and community
+4. **Performance:** Virtual DOM for efficient updates
+5. **Mobile Ready:** Can convert to React Native later
+
+#### Why Tailwind + shadcn/ui?
+1. **Rapid Development:** Pre-built components
+2. **Consistent Design:** Design system out of the box
+3. **Responsive:** Mobile-first approach
+4. **Customizable:** Easy to adapt to brand colors
+5. **Accessibility:** Built-in a11y features
+
+---
+
+## 6. Feature Prioritization & Development Phases
+
+### Phase 1: MVP (Minimum Viable Product) - 3-4 weeks
+**Goal:** Replace paper-based system with basic digital functionality
+
+**Features:**
+- ✅ Client registration and search
+- ✅ Basic measurement recording (Shirt, Churidar, Blouse)
+- ✅ Create and view orders
+- ✅ Basic billing (manual price entry)
+- ✅ Order status updates (simplified workflow)
+- ✅ Simple dashboard with order counts
+- ✅ Data export/backup
+
+**Deliverables:**
+- Functional web app deployed locally
+- User guide for mom
+- Sample data for testing
+
+### Phase 2: Enhanced Features - 2-3 weeks
+**Goal:** Add convenience and automation
+
+**Features:**
+- ✅ Advanced search and filters
+- ✅ Measurement templates for all garment types
+- ✅ Measurement history and comparison
+- ✅ Automated pricing calculation
+- ✅ Payment tracking and receipts
+- ✅ Order due date alerts
+- ✅ Print-friendly invoices
+- ✅ Basic reports (revenue, orders)
+
+### Phase 3: Polish & Optimization - 2 weeks
+**Goal:** Improve UX and performance
+
+**Features:**
+- ✅ Enhanced dashboard with charts
+- ✅ Bulk operations
+- ✅ Keyboard shortcuts for power users
+- ✅ Advanced reports with filters
+- ✅ Settings page (business info, pricing templates)
+- ✅ Data validation improvements
+- ✅ Performance optimization
+
+### Phase 4: Future Enhancements (Post-Launch)
+**Goal:** Add advanced features based on feedback
+
+**Features:**
+- 📱 SMS notifications to clients (via integration)
+- 📸 Image upload for designs and reference
+- 📊 Advanced analytics and insights
+- 🌐 Cloud sync and multi-device access
+- 👥 Multi-user support (assistants/staff)
+- 💳 Integrated payment gateways
+- 📱 Progressive Web App (PWA) for offline use
+- 🖨️ Barcode/QR code for order tracking
+- 📧 Email receipts and reminders
+- 🔗 WhatsApp Business integration
+
+---
+
+## 7. User Interface Design Guidelines
+
+### 7.1 Design Principles
+1. **Simplicity First:** Minimal clutter, clear hierarchy
+2. **Action-Oriented:** Prominent CTAs for common tasks
+3. **Forgiving:** Easy to undo, confirm destructive actions
+4. **Responsive Feedback:** Loading states, success/error messages
+5. **Consistent:** Same patterns throughout the app
+
+### 7.2 Color Scheme
+- **Primary:** Blue (#3B82F6) - Trust, reliability
+- **Secondary:** Purple (#8B5CF6) - Creativity
+- **Success:** Green (#10B981) - Completed, paid
+- **Warning:** Orange (#F59E0B) - Due soon, pending
+- **Error:** Red (#EF4444) - Overdue, cancelled
+- **Neutral:** Gray shades for text and backgrounds
+
+### 7.3 Typography
+- **Headings:** Inter or Poppins (Bold)
+- **Body:** Inter or System fonts (Regular)
+- **Sizes:** 
+  - H1: 2rem (32px)
+  - H2: 1.5rem (24px)
+  - Body: 1rem (16px)
+  - Small: 0.875rem (14px)
+
+### 7.4 Key UI Screens (Wireframe Descriptions)
+
+#### Dashboard
+- Header with business name and quick actions
+- Stats cards: Today's orders, pending, completed, revenue
+- Upcoming deliveries table (next 7 days)
+- Recent activity feed
+- Quick action buttons: New Client, New Order
+
+#### Client List
+- Search bar (prominent at top)
+- Filter options: All, Active, Inactive
+- Client cards with: Name, Phone, Last Order, Active Orders count
+- Pagination
+- Floating action button: Add New Client
+
+#### Client Details
+- Client info card (editable)
+- Tabs: Measurements | Orders | Payment History
+- Measurements section: Grouped by garment type, edit/add buttons
+- Orders section: List with status badges, quick actions
+
+#### New/Edit Order
+- Step indicator (Client → Details → Measurements → Pricing)
+- Client selection with search
+- Garment type selector with icons
+- Measurements: Load from profile or enter new
+- Pricing: Itemized list with add/remove
+- Summary card: Total, advance, balance
+- Action buttons: Save as Draft, Create Order
+
+#### Order List
+- Filters: Status, Date Range, Client, Priority
+- Sort options: Date, Delivery Date, Status
+- Order cards with color-coded status
+- Quick actions: Update Status, View Details, Print
+
+---
+
+## 8. Testing Strategy
+
+### 8.1 Testing Levels
+
+#### Unit Testing
+- Test utility functions (calculations, validations)
+- Test individual components in isolation
+- Test database service methods
+- Target: 70%+ code coverage
+
+#### Integration Testing
+- Test component interactions
+- Test database read/write operations
+- Test form submissions and data flow
+- Test routing and navigation
+
+#### User Acceptance Testing (UAT)
+- Mom tests all workflows with real data
+- Identify usability issues
+- Collect feedback on features
+- Test on actual usage devices (tablet/laptop)
+
+### 8.2 Test Scenarios
+
+**Critical User Journeys:**
+1. Add new client → Record measurements → Create order → Add payment → Complete order
+2. Search existing client → View measurements → Create new order using old measurements
+3. Update order status → Record payment → Generate invoice
+4. Search orders by date → Filter by status → Update multiple orders
+5. View dashboard → Check overdue orders → Update delivery dates
+
+**Edge Cases:**
+- Very long client names/addresses
+- Special characters in text fields
+- Large number of orders (1000+)
+- Rapid successive data entry
+- Browser refresh during form entry
+- Multiple browser tabs open
+
+---
+
+## 9. Deployment & Hosting
+
+### 9.1 Phase 1 (Local Deployment)
+
+**Option A: Local Web Server**
+- Install Node.js on mom's computer
+- Run React app in production mode
+- Access via `localhost:3000` or local IP
+- Bookmark for easy access
+
+**Option B: Static Hosting**
+- Build React app (`npm run build`)
+- Deploy to Netlify/Vercel (free tier)
+- Access via custom domain or provided URL
+- Works on any device with internet
+
+**Recommended:** Option B for easier access and no maintenance
+
+### 9.2 Phase 2 (Cloud Migration)
+
+**When to Migrate:**
+- Need to access from multiple devices
+- Want automatic backups
+- Need to add staff/assistants
+- Want SMS/email notifications
+
+**Architecture:**
+- Frontend: Vercel/Netlify (free)
+- Backend: Railway/Render (free tier or $5-10/month)
+- Database: PostgreSQL on Railway or MongoDB Atlas (free tier)
+- File Storage: Cloudinary/AWS S3 (for images)
+
+---
+
+## 10. Security & Privacy Considerations
+
+### 10.1 Data Protection
+- All client data stored locally in browser (Phase 1)
+- No data transmitted to external servers
+- Regular backup exports recommended (weekly)
+- Secure deletion of cancelled clients (optional)
+
+### 10.2 Access Control
+- Simple PIN/password login
+- Auto-logout after 30 minutes of inactivity
+- No data accessible without authentication
+
+### 10.3 Future Considerations (Cloud)
+- HTTPS only (SSL certificate)
+- JWT-based authentication
+- Role-based access control
+- Data encryption at rest and in transit
+- GDPR/privacy compliance (if applicable)
+- Regular security audits
+
+---
+
+## 11. Data Backup & Recovery
+
+### 11.1 Backup Strategy (Phase 1)
+
+**Automated Backup:**
+- Export all data to JSON file weekly (automated)
+- Save to local folder or cloud storage (Google Drive, Dropbox)
+
+**Manual Backup:**
+- Export button in Settings
+- Download as ZIP file containing:
+  - Clients JSON
+  - Orders JSON
+  - Measurements JSON
+  - Settings JSON
+
+**Backup Schedule:**
+- Weekly: Automated export
+- Before major updates: Manual backup
+- Monthly: Archive backup to external drive
+
+### 11.2 Data Recovery
+- Import function in Settings
+- Upload backup JSON files
+- Option to merge or replace existing data
+- Validation before import
+- Success/error reporting
+
+---
+
+## 12. Training & Documentation
+
+### 12.1 User Training
+- **Initial Training:** 2-hour hands-on session
+  - Basic navigation
+  - Add client and measurements
+  - Create and manage orders
+  - Record payments
+  - Generate invoices
+
+- **Reference Materials:**
+  - Quick start guide (1-page)
+  - Video tutorials (5-7 minutes each)
+  - FAQ document
+  - Troubleshooting guide
+
+### 12.2 Support Plan
+- **Developer Support:**
+  - First 3 months: On-call support for issues
+  - Phone/WhatsApp support during business hours
+  - Remote desktop access for troubleshooting
+  - Response time: Within 24 hours
+
+- **Self-Service Resources:**
+  - In-app help tooltips
+  - Contextual help buttons
+  - Video library for common tasks
+  - Printable cheat sheet with shortcuts
+
+### 12.3 Documentation Deliverables
+1. **User Manual:**
+   - Getting started guide
+   - Feature-by-feature walkthrough
+   - Screenshots for every function
+   - Common workflows with step-by-step instructions
+
+2. **Technical Documentation:**
+   - Architecture overview
+   - Database schema
+   - API documentation (for future)
+   - Deployment guide
+   - Backup and restore procedures
+
+3. **Quick Reference:**
+   - Keyboard shortcuts
+   - Common error messages and solutions
+   - Daily/weekly maintenance checklist
+   - Contact information for support
+
+---
+
+## 13. Performance Benchmarks
+
+### 13.1 Target Metrics
+- **Page Load:** < 2 seconds on 4G connection
+- **Search Response:** < 500ms for 1000+ clients
+- **Order Creation:** < 1 second save time
+- **Report Generation:** < 3 seconds for monthly reports
+- **Data Export:** < 5 seconds for full database export
+
+### 13.2 Optimization Strategies
+- Lazy loading for components
+- Virtual scrolling for long lists (100+ items)
+- Debounced search inputs
+- Indexed database queries
+- Image optimization (when added)
+- Code splitting for faster initial load
+- Service worker caching (PWA phase)
+
+---
+
+## 14. Accessibility Requirements
+
+### 14.1 WCAG 2.1 Compliance (Level AA)
+- **Keyboard Navigation:** All functions accessible via keyboard
+- **Screen Reader Support:** Proper ARIA labels
+- **Color Contrast:** Minimum 4.5:1 for text
+- **Focus Indicators:** Clear visual focus states
+- **Text Resizing:** Supports up to 200% zoom without breaking layout
+- **Form Labels:** All inputs have associated labels
+- **Error Messages:** Clear, descriptive, and actionable
+
+### 14.2 Usability for Non-Technical Users
+- **Large Touch Targets:** Minimum 44x44px for buttons
+- **Clear Labels:** No technical jargon
+- **Confirmation Dialogs:** For all destructive actions
+- **Undo Functionality:** For accidental changes
+- **Progressive Disclosure:** Advanced features hidden initially
+- **Helpful Defaults:** Pre-filled common values
+
+---
+
+## 15. Internationalization (Future)
+
+### 15.1 Language Support
+- **Phase 1:** English only
+- **Future:** Hindi, Malayalam, Tamil (based on location/need)
+- **Implementation:** i18n library (react-i18next)
+- **Considerations:** 
+  - Right-to-left (RTL) layout support (if needed)
+  - Date and number formatting per locale
+  - Currency formatting (₹)
+
+### 15.2 Regional Customization
+- Measurement units: Inches (default), centimeters option
+- Date format: DD/MM/YYYY (Indian standard)
+- Currency: INR (₹)
+- Phone number format: +91 XXXXX XXXXX
+
+---
+
+## 16. Risk Assessment & Mitigation
+
+### 16.1 Technical Risks
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| Browser compatibility issues | High | Medium | Test on target browsers; use polyfills |
+| Data loss due to browser cache clear | High | Medium | Implement export reminders; backup automation |
+| IndexedDB storage limits reached | Medium | Low | Monitor storage; implement data archival |
+| Performance degradation with large dataset | Medium | Medium | Implement pagination; optimize queries |
+| Device failure/theft | High | Low | Cloud backup option; export reminders |
+
+### 16.2 User Adoption Risks
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| Resistance to digital transition | High | Medium | Thorough training; gradual transition |
+| Complexity overwhelming user | High | Low | Simple UI; progressive feature introduction |
+| Internet connectivity issues | Low | Low | Offline-first design; local storage |
+| Learning curve too steep | Medium | Low | Video tutorials; on-call support |
+
+### 16.3 Business Risks
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| Changing business requirements | Medium | High | Modular architecture; easy to extend |
+| Competition from commercial software | Low | Medium | Custom features for specific needs |
+| Data migration challenges | Medium | Low | Well-documented import/export |
+| Cost of cloud services (future) | Low | Medium | Start free tier; scale as needed |
+
+---
+
+## 17. Success Metrics & KPIs
+
+### 17.1 Adoption Metrics
+- **User Engagement:**
+  - Daily active usage
+  - Number of orders created per day
+  - Time spent in app per session
+
+- **Feature Usage:**
+  - % of orders with measurements attached
+  - % of orders with complete pricing
+  - Payment tracking usage rate
+
+### 17.2 Efficiency Metrics
+- **Time Savings:**
+  - Time to create new order: Target < 5 minutes
+  - Time to find client: Target < 30 seconds
+  - Time to generate invoice: Target < 2 minutes
+
+- **Accuracy:**
+  - Reduction in measurement errors
+  - Reduction in billing errors
+  - Reduction in missed deliveries
+
+### 17.3 Business Impact
+- **Revenue Tracking:**
+  - Total monthly revenue (vs. previous paper method)
+  - Outstanding payments visibility
+  - Payment collection rate improvement
+
+- **Customer Satisfaction:**
+  - On-time delivery rate
+  - Repeat customer rate
+  - Customer complaint reduction
+
+---
+
+## 18. Maintenance & Support Plan
+
+### 18.1 Regular Maintenance
+- **Weekly:**
+  - Check for error logs (if implemented)
+  - Verify automated backups
+  - Monitor storage usage
+
+- **Monthly:**
+  - Review feature usage analytics
+  - Update documentation if needed
+  - Check for browser updates compatibility
+
+- **Quarterly:**
+  - Performance audit
+  - User feedback session
+  - Feature prioritization for updates
+
+### 18.2 Update Strategy
+- **Bug Fixes:** Hot-fix within 48 hours
+- **Minor Features:** Bi-weekly releases
+- **Major Features:** Quarterly releases
+- **Version Control:** Semantic versioning (v1.0.0)
+- **Changelog:** Maintain for each release
+
+### 18.3 Long-term Support
+- **Year 1:** Active development and support
+- **Year 2+:** Maintenance mode with critical updates
+- **Handoff Plan:** Documentation for future developers
+- **Open Source Option:** Consider GitHub release for community
+
+---
+
+## 19. Cost Estimation
+
+### 19.1 Development Costs
+
+| Phase | Estimated Time | Notes |
+|-------|----------------|-------|
+| Requirements & Design | 1 week | This document + UI design |
+| Phase 1 (MVP) | 3-4 weeks | Core functionality |
+| Phase 2 (Enhanced) | 2-3 weeks | Advanced features |
+| Phase 3 (Polish) | 2 weeks | UX improvements |
+| Testing & Bug Fixes | 1 week | Throughout development |
+| Training & Documentation | 3 days | User guides, videos |
+| **Total** | **9-11 weeks** | ~2.5-3 months |
+
+### 19.2 Operational Costs (Phase 1 - Local)
+- **Hosting:** $0 (local or free tier static hosting)
+- **Domain:** $10-15/year (optional)
+- **SSL Certificate:** $0 (Let's Encrypt free)
+- **Maintenance:** $0 (self-developed)
+- **Total Year 1:** ~$10-15 (optional domain only)
+
+### 19.3 Operational Costs (Phase 2 - Cloud)
+- **Hosting:** $5-20/month (Railway/Render)
+- **Database:** $0-10/month (free tier or basic)
+- **Domain:** $10-15/year
+- **SSL Certificate:** $0 (included)
+- **SMS Service:** $0.01-0.05 per SMS (future)
+- **Email Service:** $0-10/month (SendGrid free tier)
+- **Total Year 1:** ~$60-250/year
+
+---
+
+## 20. Future Roadmap
+
+### 20.1 Short-term (6 months)
+- ✅ MVP deployment and user adoption
+- 📊 Enhanced reporting with charts
+- 📱 Mobile-responsive optimization
+- 🖼️ Image upload for design references
+- 💾 Automated backup to cloud storage
+- 📧 Email invoice generation
+
+### 20.2 Medium-term (6-12 months)
+- ☁️ Cloud migration with backend API
+- 👥 Multi-user support (staff accounts)
+- 📱 SMS notifications to clients
+- 🔗 WhatsApp Business API integration
+- 📊 Advanced analytics dashboard
+- 💳 Online payment gateway integration
+- 🖨️ Barcode/QR code generation for orders
+- 📱 Progressive Web App (PWA) capabilities
+
+### 20.3 Long-term (12+ months)
+- 📱 Native mobile apps (iOS/Android via React Native)
+- 🤖 AI-powered features:
+  - Measurement prediction based on body type
+  - Intelligent pricing suggestions
+  - Demand forecasting
+  - Fabric requirement calculation
+- 🏪 Inventory management module
+- 🧵 Supplier/vendor management
+- 📈 Business intelligence and insights
+- 🌐 Multi-location support
+- 🔄 Integration with accounting software
+- 👗 Digital catalog for design references
+- 🎯 Customer loyalty program
+
+---
+
+## 21. Technical Specifications Summary
+
+### 21.1 System Requirements
+
+**Minimum Hardware:**
+- Processor: Dual-core 1.6 GHz+
+- RAM: 4 GB
+- Storage: 500 MB free space
+- Display: 1024x768 resolution
+- Internet: Not required (offline-first)
+
+**Recommended Hardware:**
+- Processor: Quad-core 2.0 GHz+
+- RAM: 8 GB
+- Storage: 2 GB free space
+- Display: 1366x768+ resolution
+- Internet: For cloud backup and updates
+
+**Software:**
+- Operating System: Windows 10+, macOS 10.14+, Linux (Ubuntu 20.04+)
+- Browser: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+- Node.js: v18+ (for development)
+
+### 21.2 Development Environment Setup
+
+```bash
+# Clone repository
+git clone <repo-url>
+cd tailor-management-system
+
+# Install dependencies
+npm install
+
+# Environment setup
+cp .env.example .env
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+### 21.3 Key Dependencies
+
+```json
+{
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "dexie": "^3.2.4",
+    "dexie-react-hooks": "^1.1.7",
+    "react-hook-form": "^7.48.0",
+    "zod": "^3.22.4",
+    "@hookform/resolvers": "^3.3.2",
+    "date-fns": "^2.30.0",
+    "lucide-react": "^0.294.0",
+    "zustand": "^4.4.7",
+    "@radix-ui/react-*": "latest",
+    "tailwindcss": "^3.3.5"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "eslint": "^8.54.0",
+    "prettier": "^3.1.0",
+    "@types/react": "^18.2.0"
+  }
+}
+```
+
+---
+
+## 22. API Design (For Future Cloud Migration)
+
+### 22.1 RESTful Endpoints
+
+**Authentication:**
+```
+POST   /api/auth/login           # User login
+POST   /api/auth/logout          # User logout
+POST   /api/auth/refresh         # Refresh token
+GET    /api/auth/me              # Get current user
+```
+
+**Clients:**
+```
+GET    /api/clients              # List all clients (with pagination)
+GET    /api/clients/:id          # Get client by ID
+POST   /api/clients              # Create new client
+PUT    /api/clients/:id          # Update client
+DELETE /api/clients/:id          # Delete client
+GET    /api/clients/search?q=    # Search clients
+```
+
+**Measurements:**
+```
+GET    /api/clients/:id/measurements           # Get client measurements
+GET    /api/measurements/:id                   # Get specific measurement
+POST   /api/clients/:id/measurements           # Add new measurement
+PUT    /api/measurements/:id                   # Update measurement
+DELETE /api/measurements/:id                   # Delete measurement
+GET    /api/measurements/:id/history           # Get measurement history
+```
+
+**Orders:**
+```
+GET    /api/orders               # List all orders
+GET    /api/orders/:id           # Get order by ID
+POST   /api/orders               # Create new order
+PUT    /api/orders/:id           # Update order
+DELETE /api/orders/:id           # Delete order
+PATCH  /api/orders/:id/status    # Update order status
+GET    /api/clients/:id/orders   # Get client orders
+```
+
+**Payments:**
+```
+GET    /api/orders/:id/payments  # Get order payments
+POST   /api/orders/:id/payments  # Add payment
+GET    /api/payments/:id         # Get payment details
+```
+
+**Reports:**
+```
+GET    /api/reports/dashboard    # Dashboard stats
+GET    /api/reports/revenue      # Revenue report
+GET    /api/reports/orders       # Orders report
+GET    /api/reports/clients      # Clients report
+```
+
+**Notifications (Future):**
+```
+POST   /api/notifications/send   # Send notification
+GET    /api/notifications        # Get notification history
+```
+
+### 22.2 Response Format
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "data": {
+    // Response data
+  },
+  "message": "Operation successful"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable error message",
+    "details": {}
+  }
+}
+```
+
+**Pagination:**
+```json
+{
+  "success": true,
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "totalPages": 8
+  }
+}
+```
+
+---
+
+## 23. Conclusion
+
+This comprehensive requirements and technical document provides a complete roadmap for developing a tailoring business management system. The system is designed with scalability, usability, and maintainability in mind, starting with a simple local deployment and providing a clear path to cloud migration.
+
+### 23.1 Key Highlights
+- **User-Centric Design:** Built specifically for home-based tailoring business workflows
+- **Offline-First:** Works without internet, data stored locally
+- **Scalable Architecture:** Easy migration path to cloud services
+- **Modern Tech Stack:** React, IndexedDB, Tailwind CSS
+- **Comprehensive Features:** Client management, measurements, orders, billing, reports
+- **Future-Ready:** Designed for SMS notifications, multi-user, and advanced features
+
+### 23.2 Next Steps
+1. **Review & Approval:** Review this document with mom for feedback
+2. **Design Mockups:** Create UI/UX designs for key screens
+3. **Development Setup:** Initialize project with chosen tech stack
+4. **Iterative Development:** Build Phase 1 (MVP) in sprints
+5. **Testing & Feedback:** UAT with real-world usage
+6. **Deployment:** Deploy to production environment
+7. **Training:** Hands-on training and documentation handoff
+8. **Monitoring:** Track usage and gather feedback for improvements
+
+### 23.3 Contact & Support
+- **Developer:** [Your Name]
+- **Email:** [Your Email]
+- **Phone:** [Your Phone]
+- **Project Repository:** [GitHub URL]
+- **Documentation:** [Docs URL]
+
+---
+
+**Document Version:** 1.0  
+**Last Updated:** November 2, 2025  
+**Status:** Draft - Awaiting Review  
+**Next Review:** Upon project kickoff
+
+---
+
+## Appendix A: Glossary
+
+- **MVP:** Minimum Viable Product - Basic version with core features
+- **IndexedDB:** Browser-based database for storing structured data
+- **PWA:** Progressive Web App - Web app that works offline like native app
+- **CRUD:** Create, Read, Update, Delete - Basic database operations
+- **UI/UX:** User Interface / User Experience
+- **API:** Application Programming Interface
+- **JWT:** JSON Web Token - Authentication method
+- **SSL:** Secure Sockets Layer - Encryption for web traffic
+- **SMS:** Short Message Service - Text messaging
+- **GST:** Goods and Services Tax (Indian tax system)
+
+## Appendix B: Sample Data Templates
+
+### Sample Client Record
+```json
+{
+  "id": "CLI-20251102-0001",
+  "name": "Priya Menon",
+  "phoneNumber": "9876543210",
+  "address": "123 MG Road, Kochi, Kerala 682001",
+  "email": "priya.menon@email.com",
+  "registrationDate": "2025-11-02",
+  "notes": "Prefers cotton fabrics, size adjustments needed"
+}
+```
+
+### Sample Measurement Record (Churidar)
+```json
+{
+  "id": "MEAS-UUID-001",
+  "clientId": "CLI-20251102-0001",
+  "garmentType": "churidar",
+  "measurements": {
+    "topLength": 42,
+    "shoulder": 14.5,
+    "sleeveLength": 20,
+    "chest": 38,
+    "waist": 34,
+    "hip": 40,
+    "bottomLength": 38,
+    "bottomWaist": 30,
+    "thigh": 22,
+    "bottomOpening": 10
+  },
+  "unit": "inches",
+  "version": 1,
+  "isActive": true,
+  "createdAt": "2025-11-02T10:30:00Z"
+}
+```
+
+### Sample Order Record
+```json
+{
+  "id": "ORD-20251102-0001",
+  "clientId": "CLI-20251102-0001",
+  "orderDate": "2025-11-02",
+  "deliveryDate": "2025-11-15",
+  "garmentType": "churidar",
+  "status": "stitching",
+  "pricing": {
+    "baseCharge": 800,
+    "customizations": [
+      {"description": "Embroidery on sleeves", "amount": 200},
+      {"description": "Lining", "amount": 100}
+    ],
+    "total": 1100
+  },
+  "payments": [
+    {"amount": 500, "date": "2025-11-02", "type": "advance", "method": "upi"}
+  ],
+  "balanceDue": 600
+}
+```
+
+## Appendix C: Measurement Reference Guide
+
+### Standard Measurement Points
+[Detailed diagrams and instructions would be included for each garment type]
+
+### Common Abbreviations
+- L: Length
+- S: Shoulder
+- SL: Sleeve Length
+- C: Chest/Bust
+- W: Waist
+- H: Hip
+- AH: Armhole
+
+---
+
+**END OF DOCUMENT**

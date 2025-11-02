@@ -1,0 +1,542 @@
+ThreadCraft MVP - Progressive Task Breakdown
+I'll break down the MVP development into clear, progressive tasks that build upon each other. This will help you tackle the project systematically.
+
+🎯 Phase 1: Project Setup & Foundation (Week 1, Days 1-2)
+Task 1.1: Initialize Project
+Duration: 2-3 hours
+
+ Create React app with Vite
+ Set up project structure (folders: components, pages, services, hooks, utils)
+ Install core dependencies:
+
+React Router DOM
+Tailwind CSS
+shadcn/ui
+Lucide React (icons)
+
+
+ Configure Tailwind and set up theme colors
+ Create basic App.jsx with routing setup
+
+Deliverable: Running React app with routing structure
+
+Task 1.2: Database Setup
+Duration: 2-3 hours
+
+ Install Dexie.js
+ Create services/database.js with schema:
+
+Clients table
+Measurements table
+Orders table
+Settings table
+
+
+ Write basic CRUD functions for each table
+ Test database operations in browser console
+ Add sample data for testing
+
+Deliverable: Working IndexedDB with test data
+
+Task 1.3: Basic Layout Components
+Duration: 3-4 hours
+
+ Create Layout.jsx with:
+
+Header/Navbar with app name and navigation
+Sidebar (collapsible for mobile)
+Main content area
+
+
+ Set up navigation links (Dashboard, Clients, Orders)
+ Add responsive behavior (mobile menu)
+ Create basic dashboard page (placeholder)
+
+Deliverable: Functional layout with navigation
+
+📊 Phase 2: Client Management (Week 1, Days 3-5)
+Task 2.1: Client List & Search
+Duration: 4-5 hours
+
+ Create ClientList.jsx page
+ Fetch and display clients from database
+ Implement search bar (search by name/phone)
+ Create ClientCard.jsx component showing:
+
+Name, phone number
+Last order date
+Active orders count
+
+
+ Add pagination (20 per page)
+ Add loading states and empty states
+
+Deliverable: Working client list with search
+
+Task 2.2: Add New Client Form
+Duration: 4-5 hours
+
+ Create ClientForm.jsx component
+ Add form fields:
+
+Name (required)
+Phone number (required, validation)
+Secondary phone (optional)
+Address (optional)
+Email (optional)
+Notes
+
+
+ Install React Hook Form + Zod for validation
+ Implement form validation rules
+ Add duplicate phone detection
+ Create auto-generated client ID (CLI-YYYYMMDD-XXXX)
+ Save to database on submit
+ Show success/error messages
+
+Deliverable: Functional "Add Client" form
+
+Task 2.3: Client Details View
+Duration: 3-4 hours
+
+ Create ClientDetails.jsx page
+ Display client information (with edit button)
+ Create tabs: Overview | Measurements | Orders
+ Show placeholder for measurements and orders
+ Add "Edit Client" functionality
+ Add "New Order" quick action button
+
+Deliverable: Client profile page with basic info
+
+📏 Phase 3: Basic Measurements (Week 2, Days 1-3)
+Task 3.1: Measurement Form - Shirt/Blouse
+Duration: 4-5 hours
+
+ Create MeasurementForm.jsx component
+ Add garment type selector (Shirt, Blouse, Churidar for MVP)
+ Create measurement fields for Shirt:
+
+Length, Shoulder, Sleeve, Chest, Waist, Hip, Armhole, Neck
+
+
+ Add unit toggle (inches/cm)
+ Allow decimal values (0.5 increments)
+ Add notes field
+ Link measurement to client ID
+ Save to database with auto-generated ID
+ Show validation messages
+
+Deliverable: Working measurement form for shirts
+
+Task 3.2: Measurement Form - Churidar/Blouse
+Duration: 3-4 hours
+
+ Add Churidar measurement fields:
+
+Top measurements (same as shirt)
+Bottom: Length, Waist, Hip, Thigh, Bottom opening
+Dupatta: Length, Width
+
+
+ Add Blouse-specific fields:
+
+Underbust, Back opening depth
+
+
+ Implement conditional field display based on garment type
+ Test all garment types
+
+Deliverable: Complete measurement forms for 3 garment types
+
+Task 3.3: Display Measurements
+Duration: 2-3 hours
+
+ Create MeasurementDisplay.jsx component
+ Show measurements grouped by garment type
+ Display in client details page
+ Add "Edit" and "New Measurement" buttons
+ Show measurement date and version
+ Handle empty state (no measurements yet)
+
+Deliverable: Measurements visible in client profile
+
+📦 Phase 4: Order Management (Week 2, Days 4-5 + Week 3, Days 1-2)
+Task 4.1: Create Order Form - Basic Info
+Duration: 4-5 hours
+
+ Create OrderForm.jsx component
+ Step 1: Client Selection
+
+Search and select client
+Display selected client info
+
+
+ Step 2: Order Details
+
+Order date (auto-filled)
+Delivery date picker
+Priority (Normal/Urgent)
+Garment type dropdown
+Quantity
+
+
+ Auto-generate Order ID (ORD-YYYYMMDD-XXXX)
+ Form validation
+
+Deliverable: Order form with basic details
+
+Task 4.2: Order Form - Fabric & Design
+Duration: 3-4 hours
+
+ Add fabric details section:
+
+Fabric type dropdown
+Provided by (Client/Tailor)
+Fabric measurements
+Notes
+
+
+ Add design details:
+
+Description text area
+Reference number
+Special instructions
+
+
+ Save draft functionality
+
+Deliverable: Complete order details form
+
+Task 4.3: Order Form - Measurements Integration
+Duration: 3-4 hours
+
+ Fetch client's existing measurements
+ Display measurement selection dropdown
+ Option to use existing or enter new measurements
+ Link selected measurement to order
+ Save measurement snapshot with order (copy, not reference)
+
+Deliverable: Orders linked to measurements
+
+Task 4.4: Order List View
+Duration: 4-5 hours
+
+ Create OrderList.jsx page
+ Fetch and display all orders
+ Create OrderCard.jsx component showing:
+
+Order ID, Client name, Garment type
+Order date, Delivery date
+Status badge (color-coded)
+Amount
+
+
+ Add filters:
+
+Status dropdown
+Date range picker
+Client search
+
+
+ Implement color coding:
+
+Red: Overdue
+Orange: Due today
+Yellow: Due this week
+
+
+ Add pagination
+
+Deliverable: Working order list with filters
+
+Task 4.5: Order Details View
+Duration: 3-4 hours
+
+ Create OrderDetails.jsx page
+ Display all order information:
+
+Client details
+Garment details
+Measurements used
+Fabric info
+Design notes
+Status
+
+
+ Add "Edit Order" button
+ Add status update section (simple dropdown for MVP)
+ Show created and updated timestamps
+
+Deliverable: Complete order details page
+
+💰 Phase 5: Basic Billing (Week 3, Days 3-5)
+Task 5.1: Manual Pricing Entry
+Duration: 3-4 hours
+
+ Add pricing section to order form
+ Create line items for:
+
+Base charge (manual entry)
+Additional charges (add/remove rows)
+Description + Amount for each
+
+
+ Calculate subtotal automatically
+ Add discount field (amount or percentage)
+ Calculate total automatically
+ Save pricing with order
+
+Deliverable: Manual pricing in order form
+
+Task 5.2: Payment Recording
+Duration: 3-4 hours
+
+ Add payment section to order details
+ Create payment form:
+
+Amount
+Date
+Payment method (Cash/UPI/Card)
+Type (Advance/Final)
+Receipt number (optional)
+Notes
+
+
+ Calculate and display:
+
+Total amount
+Total paid
+Balance due
+
+
+ Update payment status (Not Paid/Partially Paid/Fully Paid)
+ Show payment history list
+
+Deliverable: Working payment tracking
+
+Task 5.3: Simple Invoice View
+Duration: 3-4 hours
+
+ Create InvoicePreview.jsx component
+ Display invoice with:
+
+Business name (from settings)
+Order details
+Client details
+Itemized charges
+Payment breakdown
+Balance due
+
+
+ Make print-friendly (CSS)
+ Add "Print Invoice" button
+ Test printing on A5/A6 paper
+
+Deliverable: Printable invoice
+
+📈 Phase 6: Basic Dashboard (Week 4, Days 1-2)
+Task 6.1: Dashboard Stats
+Duration: 3-4 hours
+
+ Create Dashboard.jsx page
+ Add stat cards showing:
+
+Orders today (count)
+Orders this week (count)
+Pending orders (count)
+Revenue this month (sum)
+
+
+ Calculate stats from database
+ Style with color-coded cards
+ Add icons (Lucide React)
+
+Deliverable: Dashboard with key metrics
+
+Task 6.2: Dashboard Widgets
+Duration: 3-4 hours
+
+ Create "Recent Orders" widget (last 10)
+ Create "Upcoming Deliveries" widget (next 7 days)
+ Create "Overdue Orders" alert
+ Add quick action buttons:
+
+New Client
+New Order
+Search Client
+
+
+ Link all widgets to respective pages
+
+Deliverable: Complete dashboard
+
+🔧 Phase 7: Order Status Management (Week 4, Days 3-4)
+Task 7.1: Status Update UI
+Duration: 3-4 hours
+
+ Create status dropdown in order details
+ Implement status options:
+
+Order Placed
+Cutting Done
+Stitching in Progress
+Trial Pending
+Completed
+Ready for Pickup
+Delivered
+Cancelled
+
+
+ Add status update confirmation
+ Add optional notes field for status change
+ Update order timestamp on status change
+
+Deliverable: Status management working
+
+Task 7.2: Status History
+Duration: 2-3 hours
+
+ Create status history array in order
+ Log each status change with:
+
+Status name
+Timestamp
+Notes
+
+
+ Display status history in order details
+ Show as timeline/list
+ Add visual indicators for current status
+
+Deliverable: Status history tracking
+
+💾 Phase 8: Data Export & Settings (Week 4, Day 5)
+Task 8.1: Data Export
+Duration: 3-4 hours
+
+ Create Settings.jsx page
+ Add "Export Data" button
+ Export all data to JSON:
+
+Clients
+Measurements
+Orders
+Settings
+
+
+ Download as ZIP file
+ Add export timestamp to filename
+ Show success message
+
+Deliverable: Data backup functionality
+
+Task 8.2: Basic Settings
+Duration: 2-3 hours
+
+ Add business settings form:
+
+Business name
+Address
+Phone number
+Email
+
+
+ Save to settings table
+ Display in invoice/receipts
+ Add default unit preference (inches/cm)
+
+Deliverable: Basic settings page
+
+🧪 Phase 9: Testing & Bug Fixes (Week 5)
+Task 9.1: Feature Testing
+Duration: 1 day
+
+ Test all user workflows end-to-end:
+
+Add client → Add measurements → Create order → Add payment
+Search client → View details → Edit info
+Update order status → Print invoice
+
+
+ Test edge cases:
+
+Empty states
+Long text inputs
+Special characters
+Required field validations
+
+
+ Test on different browsers
+ Test on tablet (if available)
+
+
+Task 9.2: Bug Fixes & Polish
+Duration: 2-3 days
+
+ Fix identified bugs
+ Improve error messages
+ Add loading indicators where missing
+ Improve mobile responsiveness
+ Add confirmation dialogs for delete actions
+ Polish UI (spacing, colors, consistency)
+ Add tooltips/help text where needed
+
+
+Task 9.3: UAT with Mom
+Duration: 1-2 days
+
+ Demo all features to mom
+ Note feedback and pain points
+ Fix critical usability issues
+ Update documentation based on questions
+ Add any small quick-win features requested
+
+Deliverable: Tested, polished MVP ready for use
+
+📚 Phase 10: Documentation & Deployment (Week 6)
+Task 10.1: User Documentation
+Duration: 1 day
+
+ Create quick start guide (1-page PDF)
+ Write step-by-step guides for:
+
+Adding a new client
+Recording measurements
+Creating an order
+Updating status
+Recording payments
+Printing invoice
+
+
+ Create FAQ document
+ Record short video tutorials (optional)
+
+
+Task 10.2: Deployment
+Duration: 1 day
+
+ Build production version
+ Choose deployment method:
+
+Option A: Netlify/Vercel (recommended)
+Option B: Local server
+
+
+ Deploy and test
+ Set up custom domain (if desired)
+ Create bookmark/shortcut for easy access
+ Test on mom's device
+
+Deliverable: Deployed, production-ready app
+
+Task 10.3: Training & Handoff
+Duration: 1 day
+
+ Conduct 2-hour training session with mom
+ Walk through all features
+ Have mom complete tasks herself
+ Answer questions
+ Provide support contact info
+ Set up weekly check-in for first month
+
+Deliverable: Trained user, live system
