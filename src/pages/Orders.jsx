@@ -51,21 +51,24 @@ function Orders() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900">Orders</h2>
-          <p className="mt-2 text-gray-600">Track and manage all orders</p>
+      {/* Colorful Page Header */}
+      <div className="relative overflow-hidden rounded-xl mb-6 border border-blue-200 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50">
+        <div className="flex items-center justify-between p-6">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Orders</h2>
+            <p className="mt-1 text-gray-600">Track and manage all orders</p>
+          </div>
+          <button
+            onClick={() => navigate("/orders/new")}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+          >
+            + New Order
+          </button>
         </div>
-        <button
-          onClick={() => navigate("/orders/new")}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          + New Order
-        </button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
           <input
             placeholder="Search client"
@@ -122,7 +125,7 @@ function Orders() {
           </button>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-white rounded-lg border border-gray-200">
+        <div className="overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200">
