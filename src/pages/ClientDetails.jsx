@@ -46,7 +46,6 @@ function ClientDetails() {
       const clientData = await clientService.getById(clientId);
 
       if (!clientData) {
-        alert("Client not found");
         navigate("/clients");
         return;
       }

@@ -11,6 +11,7 @@ function Settings() {
     defaultUnit: "inches",
   });
   const [saving, setSaving] = useState(false);
+  const [banner, setBanner] = useState({ type: "", message: "" });
 
   useEffect(() => {
     loadSettings();
@@ -36,7 +37,7 @@ function Settings() {
     await settingsService.set("businessEmail", form.businessEmail.trim());
     await settingsService.set("defaultUnit", form.defaultUnit);
     setSaving(false);
-    alert("Settings saved");
+    setBanner({ type: "success", message: "Settings saved successfully" });
   };
 
   const handleExport = async () => {
@@ -61,10 +62,10 @@ function Settings() {
       if (!parsed || typeof parsed !== "object") throw new Error("Invalid file");
       await dbUtils.importData(parsed);
       await loadSettings();
-      alert("Import completed successfully");
+      setBanner({ type: "success", message: "Import completed successfully" });
     } catch (e) {
       console.error(e);
-      alert("Import failed. Please ensure you selected a valid backup JSON file.");
+      setBanner({ type: "error", message: "Import failed. Please select a valid backup JSON file." });
     }
   };
 
@@ -81,6 +82,15 @@ function Settings() {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        {banner.message && (
+          <div className={`mb-4 p-3 rounded border text-sm ${
+            banner.type === "success"
+              ? "bg-green-50 border-green-200 text-green-800"
+              : "bg-red-50 border-red-200 text-red-800"
+          }`}>
+            {banner.message}
+          </div>
+        )}
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">

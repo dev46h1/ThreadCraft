@@ -12,6 +12,7 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
   );
   const [clientMeasurements, setClientMeasurements] = useState([]);
   const [selectedMeasurementId, setSelectedMeasurementId] = useState("");
+  const [errors, setErrors] = useState({ clientId: "", deliveryDate: "" });
 
   const [form, setForm] = useState({
     orderDate: new Date().toISOString().split("T")[0],
@@ -75,9 +76,19 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
     [clients, selectedClientId]
   );
 
+  const selectedMeasurement = useMemo(() => {
+    if (!selectedMeasurementId) return null;
+    return (
+      clientMeasurements.find((m) => m.id === selectedMeasurementId) || null
+    );
+  }, [clientMeasurements, selectedMeasurementId]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === "deliveryDate" && errors.deliveryDate) {
+      setErrors((prev) => ({ ...prev, deliveryDate: "" }));
+    }
   };
 
   const handleNestedChange = (section, name, value) => {
@@ -89,14 +100,12 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedClient) {
-      alert("Please select a client");
-      return;
-    }
-    if (!form.deliveryDate) {
-      alert("Please choose a delivery date");
-      return;
-    }
+    const newErrors = { clientId: "", deliveryDate: "" };
+    if (!selectedClient) newErrors.clientId = "Please select a client";
+    if (!form.deliveryDate)
+      newErrors.deliveryDate = "Please choose a delivery date";
+    setErrors(newErrors);
+    if (newErrors.clientId || newErrors.deliveryDate) return;
 
     const measurement = selectedMeasurementId
       ? await measurementService.getById(selectedMeasurementId)
@@ -174,7 +183,11 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
             <select
               className="w-full border border-gray-300 rounded-lg px-3 py-2"
               value={selectedClientId}
-              onChange={(e) => setSelectedClientId(e.target.value)}
+              onChange={(e) => {
+                setSelectedClientId(e.target.value);
+                if (errors.clientId)
+                  setErrors((prev) => ({ ...prev, clientId: "" }));
+              }}
             >
               <option value="">-- Choose client --</option>
               {clients.map((c) => (
@@ -183,6 +196,9 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
                 </option>
               ))}
             </select>
+            {errors.clientId && (
+              <p className="mt-1 text-sm text-red-600">{errors.clientId}</p>
+            )}
           </div>
           {selectedClient && (
             <div className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
@@ -223,6 +239,9 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
               value={form.deliveryDate}
               onChange={handleChange}
             />
+            {errors.deliveryDate && (
+              <p className="mt-1 text-sm text-red-600">{errors.deliveryDate}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm text-gray-600 mb-1">Priority</label>
@@ -407,6 +426,41 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
                 A snapshot will be saved with the order.
               </p>
             </div>
+            {selectedMeasurement && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-900 capitalize">
+                    {selectedMeasurement.garmentType} measurements
+                  </p>
+                  <span className="text-xs text-gray-500">
+                    v{selectedMeasurement.version}
+                  </span>
+                </div>
+                <div className="max-h-48 overflow-auto pr-1">
+                  <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                    {Object.entries(selectedMeasurement.measurements || {}).map(
+                      ([k, v]) => (
+                        <React.Fragment key={k}>
+                          <dt className="text-gray-500 capitalize">
+                            {k.replace(/_/g, " ")}
+                          </dt>
+                          <dd className="text-gray-900 font-medium">
+                            {v}{" "}
+                            {selectedMeasurement.unit === "cm" ? "cm" : "in"}
+                          </dd>
+                        </React.Fragment>
+                      )
+                    )}
+                  </dl>
+                </div>
+                <p className="mt-2 text-[11px] text-gray-500">
+                  Saved on{" "}
+                  {new Date(selectedMeasurement.createdAt).toLocaleDateString(
+                    "en-IN"
+                  )}
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <p className="text-gray-600 text-sm">
@@ -628,6 +682,22 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
           Create Order
         </button>
       </div>
+
+      {/* Global error summary (bottom-left) */}
+      {Object.values(errors).some((m) => m) && (
+        <div className="fixed left-4 bottom-4 z-40 max-w-sm bg-red-50 border border-red-200 text-red-800 rounded-lg shadow p-3">
+          <p className="font-semibold text-sm mb-1">
+            Please fix the following:
+          </p>
+          <ul className="list-disc pl-5 text-sm space-y-1">
+            {Object.entries(errors)
+              .filter(([, msg]) => msg)
+              .map(([key, msg]) => (
+                <li key={key}>{msg}</li>
+              ))}
+          </ul>
+        </div>
+      )}
     </form>
   );
 }

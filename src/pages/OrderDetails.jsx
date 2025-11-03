@@ -13,6 +13,7 @@ function OrderDetails() {
   const [newStatus, setNewStatus] = useState("");
   const [statusNotes, setStatusNotes] = useState("");
   const [payment, setPayment] = useState({ amount: "", date: "", method: "cash", type: "advance", receiptNumber: "", notes: "" });
+  const [paymentError, setPaymentError] = useState("");
   const [showInvoice, setShowInvoice] = useState(false);
 
   useEffect(() => {
@@ -63,7 +64,7 @@ function OrderDetails() {
     if (!order) return;
     const amountNum = Number(payment.amount) || 0;
     if (amountNum <= 0) {
-      alert("Enter a valid amount");
+      setPaymentError("Enter a valid payment amount");
       return;
     }
     await orderService.addPayment(order.id, {
@@ -75,6 +76,7 @@ function OrderDetails() {
       notes: payment.notes,
     });
     setPayment({ amount: "", date: "", method: "cash", type: "advance", receiptNumber: "", notes: "" });
+    setPaymentError("");
     await load();
   };
 
@@ -280,6 +282,9 @@ function OrderDetails() {
           {/* Payments */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Record Payment</h3>
+            {paymentError && (
+              <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">{paymentError}</div>
+            )}
             <div className="grid grid-cols-1 gap-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
