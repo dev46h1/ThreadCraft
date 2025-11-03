@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
+import ClientDetails from "./pages/ClientDetails";
 import Orders from "./pages/Orders";
 import Settings from "./pages/Settings";
 import { initDatabase } from "./services/database";
@@ -25,6 +26,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="clients" element={<Clients />} />
+          <Route path="clients/details" element={<ClientDetails />} />
           <Route path="orders" element={<Orders />} />
           <Route path="settings" element={<Settings />} />
         </Route>
