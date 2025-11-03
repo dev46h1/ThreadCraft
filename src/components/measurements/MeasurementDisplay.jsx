@@ -78,26 +78,26 @@ function MeasurementDisplay({
           return (
             <div
               key={garmentType}
-              className="border border-gray-200 rounded-lg overflow-hidden bg-white"
+              className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm"
             >
               {/* Header */}
-              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+              <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Ruler className="h-5 w-5 text-blue-600" />
+                    <Ruler className="h-5 w-5 text-purple-600" />
                     <h4 className="font-semibold text-gray-900 capitalize">
                       {garmentType}
                     </h4>
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
                       Active
                     </span>
                   </div>
                   <button
                     onClick={() => onEdit && onEdit(activeMeasurement)}
-                    className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-white/60 rounded-lg transition-colors"
                     title="Edit measurement"
                   >
-                    <Edit2 className="h-4 w-4 text-gray-600" />
+                    <Edit2 className="h-4 w-4 text-purple-600" />
                   </button>
                 </div>
               </div>

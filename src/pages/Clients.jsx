@@ -155,22 +155,24 @@ function Clients() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900">Clients</h2>
-          <p className="mt-2 text-gray-600">
-            Manage your client database ({filteredClients.length}{" "}
-            {filteredClients.length === 1 ? "client" : "clients"})
-          </p>
+      {/* Colorful Page Header */}
+      <div className="relative overflow-hidden rounded-xl mb-6 border border-sky-200 bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50">
+        <div className="flex items-center justify-between p-6">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Clients</h2>
+            <p className="mt-1 text-gray-600">
+              Manage your client database ({filteredClients.length}{" "}
+              {filteredClients.length === 1 ? "client" : "clients"})
+            </p>
+          </div>
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 shadow-sm"
+            onClick={openAddForm}
+          >
+            <Plus className="h-5 w-5" />
+            Add Client
+          </button>
         </div>
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
-          onClick={openAddForm}
-        >
-          <Plus className="h-5 w-5" />
-          Add Client
-        </button>
       </div>
 
       {/* Search & Sort */}
@@ -276,13 +278,13 @@ function Clients() {
                 {/* Stats */}
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                   <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <Calendar className="h-4 w-4 text-blue-500" />
                     <span className="text-xs">
                       {formatDate(client.lastOrderDate)}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <Package className="h-4 w-4 text-gray-400" />
+                    <Package className="h-4 w-4 text-purple-500" />
                     <span className="text-xs">
                       {client.totalOrders || 0} orders
                     </span>
