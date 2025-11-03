@@ -10,6 +10,7 @@ import {
   Package,
   Ruler,
   FileText,
+  Plus,
 } from "lucide-react";
 import {
   clientService,
@@ -17,6 +18,7 @@ import {
   orderService,
 } from "../services/database";
 import ClientForm from "../components/clients/ClientForm";
+import MeasurementForm from "../components/measurements/MeasurementForm";
 
 function ClientDetails() {
   const navigate = useNavigate();
@@ -29,6 +31,8 @@ function ClientDetails() {
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [isMeasurementFormOpen, setIsMeasurementFormOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     if (clientId) {
@@ -63,6 +67,18 @@ function ClientDetails() {
   const handleFormSuccess = () => {
     loadClientData();
     setIsEditFormOpen(false);
+    showSuccessMessage("Client updated successfully!");
+  };
+
+  const handleMeasurementSuccess = () => {
+    loadClientData();
+    setIsMeasurementFormOpen(false);
+    showSuccessMessage("Measurement saved successfully!");
+  };
+
+  const showSuccessMessage = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   const formatDate = (dateString) => {
@@ -132,6 +148,14 @@ function ClientDetails() {
 
   return (
     <div>
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-800">
+          <Package className="h-5 w-5" />
+          {successMessage}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <button
@@ -353,16 +377,25 @@ function ClientDetails() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Saved Measurements
                 </h3>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                  + Add Measurement
+                <button
+                  onClick={() => setIsMeasurementFormOpen(true)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Measurement
                 </button>
               </div>
 
               {measurements.length === 0 ? (
                 <div className="text-center py-8">
                   <Ruler className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500">No measurements saved yet</p>
-                  <button className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  <p className="text-gray-500 mb-3">
+                    No measurements saved yet
+                  </p>
+                  <button
+                    onClick={() => setIsMeasurementFormOpen(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
                     Add First Measurement
                   </button>
                 </div>
@@ -527,6 +560,16 @@ function ClientDetails() {
         onSuccess={handleFormSuccess}
         editClient={client}
         clientService={clientService}
+      />
+
+      {/* Measurement Form Modal */}
+      <MeasurementForm
+        isOpen={isMeasurementFormOpen}
+        onClose={() => setIsMeasurementFormOpen(false)}
+        onSuccess={handleMeasurementSuccess}
+        clientId={clientId}
+        clientName={client.name}
+        measurementService={measurementService}
       />
     </div>
   );
