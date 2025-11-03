@@ -27,6 +27,14 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
     },
     designDetails: { description: "", referenceNumber: "" },
     specialInstructions: "",
+    pricing: {
+      baseCharge: 0,
+      customizations: [], // { description, amount }
+      materialCharges: 0,
+      urgentCharges: 0,
+      discountType: "amount", // amount | percent
+      discountValue: 0,
+    },
   });
 
   const garmentOptions = [
@@ -94,6 +102,27 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
       ? await measurementService.getById(selectedMeasurementId)
       : null;
 
+    const totals = (() => {
+      const base = Number(form.pricing.baseCharge) || 0;
+      const custom = (form.pricing.customizations || []).reduce(
+        (sum, c) => sum + (Number(c.amount) || 0),
+        0
+      );
+      const material = Number(form.pricing.materialCharges) || 0;
+      const urgent = Number(form.pricing.urgentCharges) || 0;
+      const subtotal = base + custom + material + urgent;
+      const discountAmt =
+        form.pricing.discountType === "percent"
+          ? Math.min(
+              100,
+              Math.max(0, Number(form.pricing.discountValue) || 0)
+            ) *
+            (subtotal / 100)
+          : Number(form.pricing.discountValue) || 0;
+      const total = Math.max(0, Math.round(subtotal - discountAmt));
+      return { subtotal, discountAmt, total };
+    })();
+
     const created = await orderService.create({
       clientId: selectedClient.id,
       clientName: selectedClient.name,
@@ -108,13 +137,22 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
       measurementSnapshot: measurement?.measurements || {},
       specialInstructions: form.specialInstructions,
       pricing: {
-        baseCharge: 0,
-        customizations: [],
-        materialCharges: 0,
-        urgentCharges: form.priority === "urgent" ? 0 : 0,
-        subtotal: 0,
-        discount: { amount: 0, reason: "" },
-        total: 0,
+        baseCharge: Number(form.pricing.baseCharge) || 0,
+        customizations: (form.pricing.customizations || []).map((c) => ({
+          description: c.description || "",
+          amount: Number(c.amount) || 0,
+        })),
+        materialCharges: Number(form.pricing.materialCharges) || 0,
+        urgentCharges: Number(form.pricing.urgentCharges) || 0,
+        subtotal: totals.subtotal,
+        discount: {
+          amount: totals.discountAmt,
+          reason:
+            form.pricing.discountType === "percent"
+              ? `${form.pricing.discountValue}%`
+              : "",
+        },
+        total: totals.total,
       },
     });
 
@@ -375,6 +413,204 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
             Select a client to load measurements.
           </p>
         )}
+      </div>
+
+      {/* Step 5: Pricing */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">Pricing</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              Base charge (₹)
+            </label>
+            <input
+              type="number"
+              min="0"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              value={form.pricing.baseCharge}
+              onChange={(e) =>
+                handleNestedChange("pricing", "baseCharge", e.target.value)
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              Material charges (₹)
+            </label>
+            <input
+              type="number"
+              min="0"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              value={form.pricing.materialCharges}
+              onChange={(e) =>
+                handleNestedChange("pricing", "materialCharges", e.target.value)
+              }
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              Urgent charges (₹)
+            </label>
+            <input
+              type="number"
+              min="0"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              value={form.pricing.urgentCharges}
+              onChange={(e) =>
+                handleNestedChange("pricing", "urgentCharges", e.target.value)
+              }
+            />
+          </div>
+        </div>
+
+        {/* Customizations */}
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm text-gray-600">Additional charges</label>
+            <button
+              type="button"
+              className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+              onClick={() =>
+                setForm((p) => ({
+                  ...p,
+                  pricing: {
+                    ...p.pricing,
+                    customizations: [
+                      ...(p.pricing.customizations || []),
+                      { description: "", amount: 0 },
+                    ],
+                  },
+                }))
+              }
+            >
+              + Add item
+            </button>
+          </div>
+          <div className="space-y-2">
+            {(form.pricing.customizations || []).map((item, idx) => (
+              <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-2">
+                <input
+                  type="text"
+                  placeholder="Description"
+                  className="md:col-span-8 border border-gray-300 rounded-lg px-3 py-2"
+                  value={item.description}
+                  onChange={(e) => {
+                    const arr = [...(form.pricing.customizations || [])];
+                    arr[idx] = { ...arr[idx], description: e.target.value };
+                    setForm((p) => ({
+                      ...p,
+                      pricing: { ...p.pricing, customizations: arr },
+                    }));
+                  }}
+                />
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Amount (₹)"
+                  className="md:col-span-3 border border-gray-300 rounded-lg px-3 py-2"
+                  value={item.amount}
+                  onChange={(e) => {
+                    const arr = [...(form.pricing.customizations || [])];
+                    arr[idx] = { ...arr[idx], amount: e.target.value };
+                    setForm((p) => ({
+                      ...p,
+                      pricing: { ...p.pricing, customizations: arr },
+                    }));
+                  }}
+                />
+                <button
+                  type="button"
+                  className="md:col-span-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  onClick={() => {
+                    const arr = [...(form.pricing.customizations || [])];
+                    arr.splice(idx, 1);
+                    setForm((p) => ({
+                      ...p,
+                      pricing: { ...p.pricing, customizations: arr },
+                    }));
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Discount and totals */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              Discount type
+            </label>
+            <select
+              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              value={form.pricing.discountType}
+              onChange={(e) =>
+                handleNestedChange("pricing", "discountType", e.target.value)
+              }
+            >
+              <option value="amount">Amount (₹)</option>
+              <option value="percent">Percent (%)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              Discount value
+            </label>
+            <input
+              type="number"
+              min="0"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              value={form.pricing.discountValue}
+              onChange={(e) =>
+                handleNestedChange("pricing", "discountValue", e.target.value)
+              }
+            />
+          </div>
+        </div>
+
+        {(() => {
+          const base = Number(form.pricing.baseCharge) || 0;
+          const custom = (form.pricing.customizations || []).reduce(
+            (sum, c) => sum + (Number(c.amount) || 0),
+            0
+          );
+          const material = Number(form.pricing.materialCharges) || 0;
+          const urgent = Number(form.pricing.urgentCharges) || 0;
+          const subtotal = base + custom + material + urgent;
+          const discountAmt =
+            form.pricing.discountType === "percent"
+              ? Math.min(
+                  100,
+                  Math.max(0, Number(form.pricing.discountValue) || 0)
+                ) *
+                (subtotal / 100)
+              : Number(form.pricing.discountValue) || 0;
+          const total = Math.max(0, Math.round(subtotal - discountAmt));
+          return (
+            <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-4 max-w-md ml-auto">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-medium">
+                  ₹{subtotal.toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm mt-1">
+                <span className="text-gray-600">Discount</span>
+                <span className="font-medium">
+                  - ₹{Math.round(discountAmt).toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-base mt-2">
+                <span className="text-gray-800 font-semibold">Total</span>
+                <span className="text-gray-900 font-bold">
+                  ₹{total.toLocaleString("en-IN")}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       <div className="flex items-center justify-end gap-3">

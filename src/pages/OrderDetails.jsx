@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Package, Calendar, User, Ruler } from "lucide-react";
+import { ArrowLeft, Package, Calendar, User, Ruler, ReceiptIndianRupee } from "lucide-react";
 import { orderService } from "../services/database";
 
 function OrderDetails() {
@@ -12,6 +12,8 @@ function OrderDetails() {
   const [loading, setLoading] = useState(true);
   const [newStatus, setNewStatus] = useState("");
   const [statusNotes, setStatusNotes] = useState("");
+  const [payment, setPayment] = useState({ amount: "", date: "", method: "cash", type: "advance", receiptNumber: "", notes: "" });
+  const [showInvoice, setShowInvoice] = useState(false);
 
   useEffect(() => {
     if (orderId) load();
@@ -51,6 +53,25 @@ function OrderDetails() {
     if (!order) return;
     await orderService.updateStatus(order.id, newStatus, statusNotes);
     setStatusNotes("");
+    await load();
+  };
+
+  const handleAddPayment = async () => {
+    if (!order) return;
+    const amountNum = Number(payment.amount) || 0;
+    if (amountNum <= 0) {
+      alert("Enter a valid amount");
+      return;
+    }
+    await orderService.addPayment(order.id, {
+      amount: amountNum,
+      date: payment.date ? new Date(payment.date).toISOString() : new Date().toISOString(),
+      method: payment.method,
+      type: payment.type,
+      receiptNumber: payment.receiptNumber,
+      notes: payment.notes,
+    });
+    setPayment({ amount: "", date: "", method: "cash", type: "advance", receiptNumber: "", notes: "" });
     await load();
   };
 
@@ -239,9 +260,183 @@ function OrderDetails() {
                 <span className="font-semibold">₹{order.balanceDue?.toLocaleString("en-IN") || 0}</span>
               </div>
             </div>
+            <button
+              onClick={() => setShowInvoice(true)}
+              className="mt-4 w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+            >
+              <ReceiptIndianRupee className="h-4 w-4" /> View Invoice
+            </button>
+          </div>
+
+          {/* Payments */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Record Payment</h3>
+            <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Amount (₹)"
+                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  value={payment.amount}
+                  onChange={(e) => setPayment((p) => ({ ...p, amount: e.target.value }))}
+                />
+                <input
+                  type="date"
+                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  value={payment.date}
+                  onChange={(e) => setPayment((p) => ({ ...p, date: e.target.value }))}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <select
+                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  value={payment.method}
+                  onChange={(e) => setPayment((p) => ({ ...p, method: e.target.value }))}
+                >
+                  {['cash','upi','card'].map((m) => (
+                    <option key={m} value={m}>{m.toUpperCase()}</option>
+                  ))}
+                </select>
+                <select
+                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  value={payment.type}
+                  onChange={(e) => setPayment((p) => ({ ...p, type: e.target.value }))}
+                >
+                  {['advance','final'].map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <input
+                type="text"
+                placeholder="Receipt number (optional)"
+                className="border border-gray-300 rounded-lg px-3 py-2"
+                value={payment.receiptNumber}
+                onChange={(e) => setPayment((p) => ({ ...p, receiptNumber: e.target.value }))}
+              />
+              <textarea
+                rows={2}
+                placeholder="Notes (optional)"
+                className="border border-gray-300 rounded-lg px-3 py-2"
+                value={payment.notes}
+                onChange={(e) => setPayment((p) => ({ ...p, notes: e.target.value }))}
+              />
+              <button
+                onClick={handleAddPayment}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Add Payment
+              </button>
+            </div>
+            {order.payments?.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">Payment History</h4>
+                <div className="space-y-2 text-sm">
+                  {order.payments.map((p, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                      <div className="text-gray-700">₹{p.amount.toLocaleString('en-IN')}</div>
+                      <div className="text-gray-500">{new Date(p.date).toLocaleDateString('en-IN')}</div>
+                      <div className="text-gray-500 capitalize">{p.method}</div>
+                      <div className="text-gray-500 capitalize">{p.type}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Simple Invoice Preview Modal */}
+      {showInvoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowInvoice(false)}>
+          <div className="bg-white w-full max-w-2xl rounded-lg shadow-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Invoice Preview</h3>
+              <button className="px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50" onClick={() => window.print()}>Print</button>
+            </div>
+            <div className="p-6 print:p-0">
+              <div className="print:p-6">
+                <div className="text-center mb-4">
+                  <h2 className="text-xl font-bold">ThreadCraft</h2>
+                  <p className="text-sm text-gray-600">Invoice</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                  <div>
+                    <p className="text-gray-500">Bill To</p>
+                    <p className="font-medium">{order.clientName}</p>
+                    <p className="text-gray-600">{order.clientPhone}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-500">Order ID</p>
+                    <p className="font-medium">{order.id}</p>
+                    <p className="text-gray-600">Delivery: {new Date(order.deliveryDate).toLocaleDateString('en-IN')}</p>
+                  </div>
+                </div>
+                <table className="w-full text-sm border-t border-b border-gray-200">
+                  <thead>
+                    <tr className="text-left">
+                      <th className="py-2">Description</th>
+                      <th className="py-2 text-right">Amount (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="py-1">Base stitching ({order.garmentType})</td>
+                      <td className="py-1 text-right">{(order.pricing?.baseCharge || 0).toLocaleString('en-IN')}</td>
+                    </tr>
+                    {order.pricing?.customizations?.map((c, i) => (
+                      <tr key={i}>
+                        <td className="py-1">{c.description || 'Customization'}</td>
+                        <td className="py-1 text-right">{(c.amount || 0).toLocaleString('en-IN')}</td>
+                      </tr>
+                    ))}
+                    {order.pricing?.materialCharges ? (
+                      <tr>
+                        <td className="py-1">Material charges</td>
+                        <td className="py-1 text-right">{(order.pricing.materialCharges || 0).toLocaleString('en-IN')}</td>
+                      </tr>
+                    ) : null}
+                    {order.pricing?.urgentCharges ? (
+                      <tr>
+                        <td className="py-1">Urgent charges</td>
+                        <td className="py-1 text-right">{(order.pricing.urgentCharges || 0).toLocaleString('en-IN')}</td>
+                      </tr>
+                    ) : null}
+                    <tr className="border-t border-gray-200">
+                      <td className="py-1 font-medium">Subtotal</td>
+                      <td className="py-1 text-right font-medium">{(order.pricing?.subtotal || 0).toLocaleString('en-IN')}</td>
+                    </tr>
+                    {order.pricing?.discount?.amount ? (
+                      <tr>
+                        <td className="py-1">Discount {order.pricing.discount?.reason ? `(${order.pricing.discount.reason})` : ''}</td>
+                        <td className="py-1 text-right">- {(order.pricing.discount.amount || 0).toLocaleString('en-IN')}</td>
+                      </tr>
+                    ) : null}
+                    <tr className="border-t border-gray-200">
+                      <td className="py-1 font-semibold">Total</td>
+                      <td className="py-1 text-right font-semibold">{(order.pricing?.total || 0).toLocaleString('en-IN')}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1">Paid</td>
+                      <td className="py-1 text-right">{(order.totalPaid || 0).toLocaleString('en-IN')}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1">Balance Due</td>
+                      <td className="py-1 text-right">{(order.balanceDue || 0).toLocaleString('en-IN')}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p className="text-xs text-gray-500 mt-4">Thank you for your business!</p>
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-200 text-right">
+              <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" onClick={() => setShowInvoice(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
