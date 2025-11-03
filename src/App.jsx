@@ -1,12 +1,24 @@
-import React from "react";
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import Orders from "./pages/Orders";
 import Settings from "./pages/Settings";
+import { initDatabase } from "./services/database";
 
 function App() {
+  useEffect(() => {
+    // Initialize database on app load
+    initDatabase().then((success) => {
+      if (success) {
+        console.log("✅ Database ready");
+      } else {
+        console.error("❌ Database initialization failed");
+      }
+    });
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
