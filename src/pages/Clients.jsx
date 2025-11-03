@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Users,
   Search,
@@ -13,6 +14,7 @@ import { clientService, orderService } from "../services/database";
 import ClientForm from "../components/clients/ClientForm";
 
 function Clients() {
+  const navigate = useNavigate();
   const [clients, setClients] = useState([]);
   const [filteredClients, setFilteredClients] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
