@@ -14,6 +14,8 @@ function Dashboard() {
     revenueThisMonth: 0,
   });
   const [recentOrders, setRecentOrders] = useState([]);
+  const [upcomingDeliveries, setUpcomingDeliveries] = useState([]);
+  const [overdueOrders, setOverdueOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,8 +53,32 @@ function Dashboard() {
         })
         .reduce((sum, order) => sum + (order.pricing?.total || 0), 0);
 
-      // Get recent 5 orders
+      // Get recent 5 orders (already sorted desc by orderDate in service)
       const recent = orders.slice(0, 5);
+
+      // Upcoming deliveries next 7 days (excluding delivered/cancelled)
+      const todayDate = new Date();
+      const weekAhead = new Date();
+      weekAhead.setDate(todayDate.getDate() + 7);
+      const upcoming = orders
+        .filter((o) => {
+          if (!o.deliveryDate) return false;
+          if (o.status === "delivered" || o.status === "cancelled") return false;
+          const d = new Date(o.deliveryDate);
+          return d >= todayDate && d <= weekAhead;
+        })
+        .sort((a, b) => new Date(a.deliveryDate) - new Date(b.deliveryDate))
+        .slice(0, 7);
+
+      // Overdue orders (excluding delivered/cancelled)
+      const overdue = orders
+        .filter((o) => {
+          if (!o.deliveryDate) return false;
+          if (o.status === "delivered" || o.status === "cancelled") return false;
+          return new Date(o.deliveryDate) < new Date();
+        })
+        .sort((a, b) => new Date(a.deliveryDate) - new Date(b.deliveryDate))
+        .slice(0, 7);
 
       setStats({
         ordersToday,
@@ -62,6 +88,8 @@ function Dashboard() {
       });
 
       setRecentOrders(recent);
+      setUpcomingDeliveries(upcoming);
+      setOverdueOrders(overdue);
     } catch (error) {
       console.error("Error loading dashboard data:", error);
     } finally {
@@ -247,6 +275,71 @@ function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Upcoming Deliveries & Overdue */}
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Upcoming Deliveries (7 days)</h3>
+            <button
+              onClick={() => navigate("/orders")}
+              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              View Orders →
+            </button>
+          </div>
+          {upcomingDeliveries.length === 0 ? (
+            <p className="text-sm text-gray-500">No deliveries due in the next week.</p>
+          ) : (
+            <div className="space-y-2">
+              {upcomingDeliveries.map((o) => (
+                <div
+                  key={o.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
+                  onClick={() => navigate(`/orders?id=${o.id}`)}
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">{o.clientName}</p>
+                    <p className="text-xs text-gray-600">{o.garmentType} • {o.id}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-900">{formatDate(o.deliveryDate)}</p>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(o.status)}`}>{o.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Overdue Orders</h3>
+            <span className="text-sm font-semibold text-red-600">{overdueOrders.length}</span>
+          </div>
+          {overdueOrders.length === 0 ? (
+            <p className="text-sm text-gray-500">No overdue orders. Great!</p>
+          ) : (
+            <div className="space-y-2">
+              {overdueOrders.map((o) => (
+                <div
+                  key={o.id}
+                  className="flex items-center justify-between p-3 bg-red-50 rounded-lg hover:bg-red-100 cursor-pointer"
+                  onClick={() => navigate(`/orders?id=${o.id}`)}
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">{o.clientName}</p>
+                    <p className="text-xs text-gray-600">{o.garmentType} • {o.id}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-red-700">Due {formatDate(o.deliveryDate)}</p>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(o.status)}`}>{o.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
