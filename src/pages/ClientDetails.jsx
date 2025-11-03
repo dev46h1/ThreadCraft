@@ -17,6 +17,8 @@ import {
   orderService,
 } from "../services/database";
 import ClientForm from "../components/clients/ClientForm";
+import MeasurementForm from "../components/measurements/MeasurementForm";
+import MeasurementDisplay from "../components/measurements/MeasurementDisplay";
 
 function ClientDetails() {
   const navigate = useNavigate();
@@ -29,6 +31,8 @@ function ClientDetails() {
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [isMeasurementFormOpen, setIsMeasurementFormOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     if (clientId) {
@@ -63,6 +67,18 @@ function ClientDetails() {
   const handleFormSuccess = () => {
     loadClientData();
     setIsEditFormOpen(false);
+    showSuccessMessage("Client updated successfully!");
+  };
+
+  const handleMeasurementSuccess = () => {
+    loadClientData();
+    setIsMeasurementFormOpen(false);
+    showSuccessMessage("Measurement saved successfully!");
+  };
+
+  const showSuccessMessage = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   const formatDate = (dateString) => {
@@ -132,6 +148,14 @@ function ClientDetails() {
 
   return (
     <div>
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-800">
+          <Package className="h-5 w-5" />
+          {successMessage}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <button
@@ -353,74 +377,17 @@ function ClientDetails() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Saved Measurements
                 </h3>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                  + Add Measurement
-                </button>
               </div>
 
-              {measurements.length === 0 ? (
-                <div className="text-center py-8">
-                  <Ruler className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500">No measurements saved yet</p>
-                  <button className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    Add First Measurement
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {Object.entries(groupMeasurementsByType()).map(
-                    ([garmentType, measurements]) => (
-                      <div
-                        key={garmentType}
-                        className="border border-gray-200 rounded-lg p-4"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-semibold text-gray-900 capitalize">
-                            {garmentType}
-                          </h4>
-                          <span className="text-sm text-gray-500">
-                            {measurements.length} version
-                            {measurements.length > 1 ? "s" : ""}
-                          </span>
-                        </div>
-                        {measurements
-                          .filter((m) => m.isActive)
-                          .map((m) => (
-                            <div key={m.id} className="bg-gray-50 rounded p-3">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm text-gray-500">
-                                  Version {m.version}
-                                </span>
-                                <span className="text-xs text-gray-400">
-                                  {formatDate(m.createdAt)}
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                                {Object.entries(m.measurements)
-                                  .slice(0, 8)
-                                  .map(([key, value]) => (
-                                    <div key={key}>
-                                      <span className="text-gray-500 capitalize">
-                                        {key}:
-                                      </span>{" "}
-                                      <span className="text-gray-900 font-medium">
-                                        {value} {m.unit}
-                                      </span>
-                                    </div>
-                                  ))}
-                              </div>
-                              {m.notes && (
-                                <p className="text-sm text-gray-600 mt-2">
-                                  Note: {m.notes}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
+              <MeasurementDisplay
+                measurements={measurements}
+                onAddNew={() => setIsMeasurementFormOpen(true)}
+                onEdit={(measurement) => {
+                  // Could open edit form with pre-filled data
+                  console.log("Edit measurement:", measurement);
+                  setIsMeasurementFormOpen(true);
+                }}
+              />
             </div>
           )}
 
@@ -527,6 +494,16 @@ function ClientDetails() {
         onSuccess={handleFormSuccess}
         editClient={client}
         clientService={clientService}
+      />
+
+      {/* Measurement Form Modal */}
+      <MeasurementForm
+        isOpen={isMeasurementFormOpen}
+        onClose={() => setIsMeasurementFormOpen(false)}
+        onSuccess={handleMeasurementSuccess}
+        clientId={clientId}
+        clientName={client.name}
+        measurementService={measurementService}
       />
     </div>
   );

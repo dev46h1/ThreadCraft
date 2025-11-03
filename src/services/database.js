@@ -99,8 +99,11 @@ export const measurementService = {
 
     // Deactivate previous measurements for same client and garment type
     const existing = await db.measurements
-      .where("[clientId+garmentType+isActive]")
-      .equals([measurementData.clientId, measurementData.garmentType, true])
+      .where("clientId")
+      .equals(measurementData.clientId)
+      .filter(
+        (m) => m.garmentType === measurementData.garmentType && m.isActive
+      )
       .toArray();
 
     for (const m of existing) {
