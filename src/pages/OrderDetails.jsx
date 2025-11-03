@@ -14,6 +14,7 @@ function OrderDetails() {
   const [statusNotes, setStatusNotes] = useState("");
   const [payment, setPayment] = useState({ amount: "", date: "", method: "cash", type: "advance", receiptNumber: "", notes: "" });
   const [paymentError, setPaymentError] = useState("");
+  const [pendingDeliveryConfirm, setPendingDeliveryConfirm] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
 
   useEffect(() => {
@@ -35,6 +36,12 @@ function OrderDetails() {
     return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
   };
 
+  const formatStatus = (status) =>
+    (status || "")
+      .split("_")
+      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
+      .join(" ");
+
   const getStatusColor = (status) => {
     const colors = {
       placed: "bg-blue-100 text-blue-700",
@@ -55,7 +62,46 @@ function OrderDetails() {
     if (!newStatus || newStatus === order.status) {
       return;
     }
+    // If delivering with outstanding balance, show inline confirmation banner
+    if (newStatus === "delivered" && (order.balanceDue || 0) > 0) {
+      setPendingDeliveryConfirm(true);
+      return;
+    }
     await orderService.updateStatus(order.id, newStatus, statusNotes);
+    setStatusNotes("");
+    await load();
+  };
+
+  const proceedDeliverWithPending = async () => {
+    if (!order) return;
+    await orderService.updateStatus(order.id, "delivered", statusNotes);
+    setPendingDeliveryConfirm(false);
+    setStatusNotes("");
+    await load();
+  };
+
+  const cancelDeliverWithPending = () => {
+    setPendingDeliveryConfirm(false);
+  };
+
+  const payBalanceAndDeliver = async () => {
+    if (!order) return;
+    const balance = order.balanceDue || 0;
+    if (balance <= 0) {
+      await proceedDeliverWithPending();
+      return;
+    }
+    // Record payment for remaining balance, then mark delivered
+    await orderService.addPayment(order.id, {
+      amount: balance,
+      date: new Date().toISOString(),
+      method: "cash",
+      type: "final",
+      receiptNumber: "",
+      notes: "Auto-collected at delivery",
+    });
+    await orderService.updateStatus(order.id, "delivered", statusNotes);
+    setPendingDeliveryConfirm(false);
     setStatusNotes("");
     await load();
   };
@@ -121,7 +167,7 @@ function OrderDetails() {
             <p className="text-sm text-gray-500">Order Details</p>
           </div>
           <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${getStatusColor(order.status)}`}>
-            {order.status}
+            {formatStatus(order.status)}
           </span>
         </div>
       </div>
@@ -201,7 +247,7 @@ function OrderDetails() {
                 return (
                   <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border ${isCurrent ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"}`}>
                     <div className="flex items-center gap-3">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(s.status)}`}>{s.status}{isCurrent ? " • current" : ""}</span>
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(s.status)}`}>{formatStatus(s.status)}{isCurrent ? " • current" : ""}</span>
                       <span className="text-sm text-gray-600">{formatDate(s.timestamp)}</span>
                     </div>
                     {s.notes && <span className="text-sm text-gray-500">{s.notes}</span>}
@@ -214,46 +260,48 @@ function OrderDetails() {
 
         {/* Right: status update & amounts */}
         <div className="space-y-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Update Status</h3>
-            <div className="space-y-3">
-              <select
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 capitalize"
-                value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
-              >
-                {[
-                  "placed",
-                  "fabric_received",
-                  "cutting",
-                  "stitching",
-                  "trial",
-                  "alterations",
-                  "completed",
-                  "ready",
-                  "delivered",
-                  "cancelled",
-                ].map((s) => (
-                  <option key={s} value={s}>
-                    {s.replace("_", " ")}
-                  </option>
-                ))}
-              </select>
-              <textarea
-                className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                placeholder="Optional notes"
-                rows={3}
-                value={statusNotes}
-                onChange={(e) => setStatusNotes(e.target.value)}
-              />
-              <button
-                onClick={handleUpdateStatus}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Save Status
-              </button>
+          {order.status !== "delivered" && order.status !== "cancelled" && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Update Status</h3>
+              <div className="space-y-3">
+                <select
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 capitalize"
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value)}
+                >
+                  {[
+                    "placed",
+                    "fabric_received",
+                    "cutting",
+                    "stitching",
+                    "trial",
+                    "alterations",
+                    "completed",
+                    "ready",
+                    "delivered",
+                    "cancelled",
+                  ].map((s) => (
+                    <option key={s} value={s}>
+                      {s.replace("_", " ")}
+                    </option>
+                  ))}
+                </select>
+                <textarea
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  placeholder="Optional notes"
+                  rows={3}
+                  value={statusNotes}
+                  onChange={(e) => setStatusNotes(e.target.value)}
+                />
+                <button
+                  onClick={handleUpdateStatus}
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Save Status
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Amounts</h3>
@@ -361,6 +409,40 @@ function OrderDetails() {
           </div>
         </div>
       </div>
+
+      {/* Inline confirmation banner for delivery with pending balance */}
+      {pendingDeliveryConfirm && (
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-4 z-50 max-w-xl w-[92%] sm:w-auto bg-amber-50 border border-amber-200 text-amber-900 rounded-lg shadow p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <p className="font-semibold text-sm">Pending Balance</p>
+              <p className="text-sm mt-1">
+                A balance of ₹{(order.balanceDue || 0).toLocaleString("en-IN")} is still unpaid. Mark as Delivered anyway?
+              </p>
+            </div>
+            <div className="flex items-center gap-2 mt-2 sm:mt-0">
+              <button
+                onClick={cancelDeliverWithPending}
+                className="px-3 py-1.5 border border-amber-300 rounded-lg text-amber-900 hover:bg-amber-100 text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={proceedDeliverWithPending}
+                className="px-3 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-sm"
+              >
+                Mark Delivered
+              </button>
+              <button
+                onClick={payBalanceAndDeliver}
+                className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+              >
+                Pay Balance & Deliver
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Simple Invoice Preview Modal */}
       {showInvoice && (

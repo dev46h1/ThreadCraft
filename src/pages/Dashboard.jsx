@@ -100,12 +100,13 @@ function Dashboard() {
   const getStatusColor = (status) => {
     const colors = {
       placed: "bg-blue-100 text-blue-700",
-      measuring: "bg-purple-100 text-purple-700",
+      fabric_received: "bg-teal-100 text-teal-700",
       cutting: "bg-yellow-100 text-yellow-700",
       stitching: "bg-orange-100 text-orange-700",
-      fitting: "bg-indigo-100 text-indigo-700",
-      finishing: "bg-pink-100 text-pink-700",
+      trial: "bg-indigo-100 text-indigo-700",
+      alterations: "bg-pink-100 text-pink-700",
       completed: "bg-green-100 text-green-700",
+      ready: "bg-emerald-100 text-emerald-700",
       delivered: "bg-gray-100 text-gray-700",
       cancelled: "bg-red-100 text-red-700",
     };
@@ -120,6 +121,12 @@ function Dashboard() {
       year: "numeric",
     });
   };
+
+  const formatStatus = (status) =>
+    (status || "")
+      .split("_")
+      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
+      .join(" ");
 
   if (loading) {
     return (
@@ -242,7 +249,7 @@ function Dashboard() {
                   <tr
                     key={order.id}
                     className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/orders?id=${order.id}`)}
+                    onClick={() => navigate(`/orders/details?id=${order.id}`)}
                   >
                     <td className="py-3 px-4 text-sm text-gray-900">
                       {order.id}
@@ -262,7 +269,7 @@ function Dashboard() {
                           order.status
                         )}`}
                       >
-                        {order.status}
+                        {formatStatus(order.status)}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-900 text-right font-medium">
@@ -296,7 +303,7 @@ function Dashboard() {
                 <div
                   key={o.id}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
-                  onClick={() => navigate(`/orders?id=${o.id}`)}
+                  onClick={() => navigate(`/orders/details?id=${o.id}`)}
                 >
                   <div>
                     <p className="font-medium text-gray-900">{o.clientName}</p>
@@ -304,7 +311,7 @@ function Dashboard() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-900">{formatDate(o.deliveryDate)}</p>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(o.status)}`}>{o.status}</span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(o.status)}`}>{formatStatus(o.status)}</span>
                   </div>
                 </div>
               ))}
@@ -324,7 +331,7 @@ function Dashboard() {
                 <div
                   key={o.id}
                   className="flex items-center justify-between p-3 bg-red-50 rounded-lg hover:bg-red-100 cursor-pointer"
-                  onClick={() => navigate(`/orders?id=${o.id}`)}
+                  onClick={() => navigate(`/orders/details?id=${o.id}`)}
                 >
                   <div>
                     <p className="font-medium text-gray-900">{o.clientName}</p>
@@ -332,7 +339,7 @@ function Dashboard() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-red-700">Due {formatDate(o.deliveryDate)}</p>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(o.status)}`}>{o.status}</span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(o.status)}`}>{formatStatus(o.status)}</span>
                   </div>
                 </div>
               ))}

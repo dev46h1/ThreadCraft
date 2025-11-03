@@ -93,17 +93,24 @@ function ClientDetails() {
   const getStatusColor = (status) => {
     const colors = {
       placed: "bg-blue-100 text-blue-700",
-      measuring: "bg-purple-100 text-purple-700",
+      fabric_received: "bg-teal-100 text-teal-700",
       cutting: "bg-yellow-100 text-yellow-700",
       stitching: "bg-orange-100 text-orange-700",
-      fitting: "bg-indigo-100 text-indigo-700",
-      finishing: "bg-pink-100 text-pink-700",
+      trial: "bg-indigo-100 text-indigo-700",
+      alterations: "bg-pink-100 text-pink-700",
       completed: "bg-green-100 text-green-700",
+      ready: "bg-emerald-100 text-emerald-700",
       delivered: "bg-gray-100 text-gray-700",
       cancelled: "bg-red-100 text-red-700",
     };
     return colors[status] || "bg-gray-100 text-gray-700";
   };
+
+  const formatStatus = (status) =>
+    (status || "")
+      .split("_")
+      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
+      .join(" ");
 
   const groupMeasurementsByType = () => {
     const grouped = {};
@@ -341,7 +348,7 @@ function ClientDetails() {
                       <div
                         key={order.id}
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/orders?id=${order.id}`)}
+                        onClick={() => navigate(`/orders/details?id=${order.id}`)}
                       >
                         <div>
                           <p className="font-medium text-gray-900">
@@ -357,7 +364,7 @@ function ClientDetails() {
                               order.status
                             )}`}
                           >
-                            {order.status}
+                            {formatStatus(order.status)}
                           </span>
                           <p className="text-sm text-gray-500">
                             {formatDate(order.orderDate)}
@@ -450,7 +457,7 @@ function ClientDetails() {
                         <tr
                           key={order.id}
                           className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                          onClick={() => navigate(`/orders?id=${order.id}`)}
+                          onClick={() => navigate(`/orders/details?id=${order.id}`)}
                         >
                           <td className="py-3 px-4 text-sm text-gray-900">
                             {order.id}

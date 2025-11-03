@@ -49,6 +49,28 @@ function Orders() {
     return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
   };
 
+  const formatStatus = (status) =>
+    (status || "")
+      .split("_")
+      .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
+      .join(" ");
+
+  const getStatusColor = (status) => {
+    const colors = {
+      placed: "bg-blue-100 text-blue-700",
+      fabric_received: "bg-teal-100 text-teal-700",
+      cutting: "bg-yellow-100 text-yellow-700",
+      stitching: "bg-orange-100 text-orange-700",
+      trial: "bg-indigo-100 text-indigo-700",
+      alterations: "bg-pink-100 text-pink-700",
+      completed: "bg-green-100 text-green-700",
+      ready: "bg-emerald-100 text-emerald-700",
+      delivered: "bg-gray-100 text-gray-700",
+      cancelled: "bg-red-100 text-red-700",
+    };
+    return colors[status] || "bg-gray-100 text-gray-700";
+  };
+
   return (
     <div>
       {/* Colorful Page Header */}
@@ -151,8 +173,8 @@ function Orders() {
                   <td className="py-3 px-4 text-sm text-gray-600">{formatDate(o.orderDate)}</td>
                   <td className="py-3 px-4 text-sm text-gray-600">{formatDate(o.deliveryDate)}</td>
                   <td className="py-3 px-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-gray-100 text-gray-700">
-                      {o.status}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(o.status)}`}>
+                      {formatStatus(o.status)}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-900 text-right font-medium">
