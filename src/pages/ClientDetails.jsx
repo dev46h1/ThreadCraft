@@ -10,7 +10,6 @@ import {
   Package,
   Ruler,
   FileText,
-  Plus,
 } from "lucide-react";
 import {
   clientService,
@@ -19,6 +18,7 @@ import {
 } from "../services/database";
 import ClientForm from "../components/clients/ClientForm";
 import MeasurementForm from "../components/measurements/MeasurementForm";
+import MeasurementDisplay from "../components/measurements/MeasurementDisplay";
 
 function ClientDetails() {
   const navigate = useNavigate();
@@ -377,83 +377,17 @@ function ClientDetails() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Saved Measurements
                 </h3>
-                <button
-                  onClick={() => setIsMeasurementFormOpen(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Measurement
-                </button>
               </div>
 
-              {measurements.length === 0 ? (
-                <div className="text-center py-8">
-                  <Ruler className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500 mb-3">
-                    No measurements saved yet
-                  </p>
-                  <button
-                    onClick={() => setIsMeasurementFormOpen(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Add First Measurement
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {Object.entries(groupMeasurementsByType()).map(
-                    ([garmentType, measurements]) => (
-                      <div
-                        key={garmentType}
-                        className="border border-gray-200 rounded-lg p-4"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-semibold text-gray-900 capitalize">
-                            {garmentType}
-                          </h4>
-                          <span className="text-sm text-gray-500">
-                            {measurements.length} version
-                            {measurements.length > 1 ? "s" : ""}
-                          </span>
-                        </div>
-                        {measurements
-                          .filter((m) => m.isActive)
-                          .map((m) => (
-                            <div key={m.id} className="bg-gray-50 rounded p-3">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm text-gray-500">
-                                  Version {m.version}
-                                </span>
-                                <span className="text-xs text-gray-400">
-                                  {formatDate(m.createdAt)}
-                                </span>
-                              </div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                                {Object.entries(m.measurements)
-                                  .slice(0, 8)
-                                  .map(([key, value]) => (
-                                    <div key={key}>
-                                      <span className="text-gray-500 capitalize">
-                                        {key}:
-                                      </span>{" "}
-                                      <span className="text-gray-900 font-medium">
-                                        {value} {m.unit}
-                                      </span>
-                                    </div>
-                                  ))}
-                              </div>
-                              {m.notes && (
-                                <p className="text-sm text-gray-600 mt-2">
-                                  Note: {m.notes}
-                                </p>
-                              )}
-                            </div>
-                          ))}
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
+              <MeasurementDisplay
+                measurements={measurements}
+                onAddNew={() => setIsMeasurementFormOpen(true)}
+                onEdit={(measurement) => {
+                  // Could open edit form with pre-filled data
+                  console.log("Edit measurement:", measurement);
+                  setIsMeasurementFormOpen(true);
+                }}
+              />
             </div>
           )}
 
