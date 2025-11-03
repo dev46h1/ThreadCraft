@@ -415,3 +415,156 @@ Status
 ✅ Success notifications working
 ✅ Order ID auto-generation documented
 Note: Current implementation creates basic orders. Additional steps (fabric details, measurements, pricing) will be added in subsequent tasks (4.2, 4.3, 4.4).
+Technical Summary - Task 4.2 Complete
+File Modified
+
+src/components/orders/OrderForm.jsx - Enhanced with fabric & design sections
+
+Features Implemented
+Multi-Step Form Extended
+
+Step 3: Fabric Details (new)
+Step 4: Design Details (new)
+Total steps: 4 (Client Selection → Order Details → Fabric Details → Design Details)
+
+Step 3: Fabric Details
+Fields Added:
+
+Fabric type dropdown (11 options: Cotton, Silk, Chiffon, Georgette, Linen, Polyester, Crepe, Velvet, Satin, Brocade, Other)
+Provided by radio buttons (Client/Tailor)
+Conditional fabric measurements (only if provided by tailor):
+
+Length (meters, decimal input)
+Width (meters, decimal input)
+
+
+Fabric notes textarea (optional)
+
+Validation:
+
+Fabric type required
+Fabric measurements required only when providedBy === "tailor"
+Positive number validation for measurements
+
+Data Structure:
+javascriptfabricDetails: {
+  type: string,                    // Selected fabric type
+  providedBy: "client" | "tailor", // Who provides fabric
+  measurements: {
+    length: number,                // In meters
+    width: number                  // In meters
+  } | null,                        // Null if provided by client
+  notes: string                    // Optional notes
+}
+Step 4: Design Details
+Fields Added:
+
+Design description textarea (required, 4 rows)
+Reference number input (optional)
+Special instructions textarea (optional, 3 rows)
+Order summary card (read-only display of key order info)
+
+Validation:
+
+Design description required (minimum text validation)
+
+Data Structure:
+javascriptdesignDetails: {
+  description: string,           // Design description
+  referenceNumber: string,       // Optional reference
+  specialInstructions: string    // Optional instructions
+}
+Draft Functionality
+Save Draft:
+
+Button in header (appears from step 2 onwards)
+Saves to localStorage with key orderDraft
+Stored data:
+
+selectedClient object
+formData (all form fields)
+current step number
+savedAt timestamp
+
+
+
+Load Draft:
+
+Auto-checks for draft on modal open (if no preSelectedClientId)
+Prompts user with confirmation dialog
+Restores: client, form data, step position
+Draft cleared on successful order creation or user decline
+
+Clear Draft:
+
+Clears localStorage entry on order submission
+Manual clear on user decline
+
+Validation Flow
+
+validateStep2() - Order details (date, garment, quantity)
+validateStep3() - Fabric details (type, measurements if tailor-provided)
+validateStep4() - Design details (description required)
+All validations must pass before final submission
+
+State Management
+javascriptformData: {
+  orderDate: string,
+  deliveryDate: string,
+  priority: "normal" | "urgent",
+  garmentType: string,
+  quantity: number,
+  fabricDetails: {
+    type: string,
+    providedBy: string,
+    measurements: { length, width } | null,
+    notes: string
+  },
+  designDetails: {
+    description: string,
+    referenceNumber: string,
+    specialInstructions: string
+  }
+}
+Helper Functions
+
+handleNestedChange(section, field, value) - Updates nested objects (fabricDetails, designDetails)
+handleFabricMeasurementChange(field, value) - Updates fabric measurements
+handleSaveDraft() - Persists form to localStorage
+loadDraft() - Retrieves draft from localStorage
+clearDraft() - Removes draft from localStorage
+
+UI Enhancements
+
+Save icon button in header (visible from step 2+)
+Section headers with icons (Scissors for fabric, Palette for design)
+Conditional rendering of fabric measurements based on providedBy selection
+Purple-themed info box for fabric measurements
+Gray summary card in design details step
+Backdrop click prompts save draft confirmation
+
+Order Submission
+Final orderData structure passed to onSuccess:
+javascript{
+  clientId, clientName, clientPhone,
+  orderDate, deliveryDate, priority,
+  garmentType, quantity,
+  fabricDetails: {
+    type, providedBy,
+    measurements: { length, width } | null,
+    notes
+  },
+  designDetails: {
+    description,
+    referenceNumber,
+    specialInstructions
+  }
+}
+Status
+✅ Task 4.2 complete
+✅ Fabric details section functional
+✅ Design details section functional
+✅ Draft save/load working
+✅ 4-step validation chain implemented
+✅ Conditional fabric measurements logic working
+✅ Order summary display added

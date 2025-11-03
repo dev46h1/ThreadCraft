@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { X, AlertCircle, Search, User, Calendar, Package } from "lucide-react";
+import {
+  X,
+  AlertCircle,
+  Search,
+  User,
+  Calendar,
+  Package,
+  Scissors,
+  Palette,
+  Save,
+} from "lucide-react";
 
 function OrderForm({
   isOpen,
@@ -21,10 +31,25 @@ function OrderForm({
     priority: "normal",
     garmentType: "",
     quantity: 1,
+    fabricDetails: {
+      type: "",
+      providedBy: "client",
+      measurements: {
+        length: "",
+        width: "",
+      },
+      notes: "",
+    },
+    designDetails: {
+      description: "",
+      referenceNumber: "",
+      specialInstructions: "",
+    },
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   // Load clients on mount
   useEffect(() => {
@@ -88,6 +113,20 @@ function OrderForm({
       priority: "normal",
       garmentType: "",
       quantity: 1,
+      fabricDetails: {
+        type: "",
+        providedBy: "client",
+        measurements: {
+          length: "",
+          width: "",
+        },
+        notes: "",
+      },
+      designDetails: {
+        description: "",
+        referenceNumber: "",
+        specialInstructions: "",
+      },
     });
     setErrors({});
   };
@@ -108,10 +147,38 @@ function OrderForm({
     }
   };
 
+  const handleNestedChange = (section, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value,
+      },
+    }));
+
+    // Clear error for this field
+    if (errors[`${section}.${field}`]) {
+      setErrors((prev) => ({ ...prev, [`${section}.${field}`]: "" }));
+    }
+  };
+
+  const handleFabricMeasurementChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      fabricDetails: {
+        ...prev.fabricDetails,
+        measurements: {
+          ...prev.fabricDetails.measurements,
+          [field]: value,
+        },
+      },
+    }));
+  };
+
   const validateStep2 = () => {
     const newErrors = {};
 
-    // Delivery date validation
+    // Basic order details validation
     if (!formData.deliveryDate) {
       newErrors.deliveryDate = "Delivery date is required";
     } else {
@@ -123,12 +190,10 @@ function OrderForm({
       }
     }
 
-    // Garment type validation
     if (!formData.garmentType) {
       newErrors.garmentType = "Garment type is required";
     }
 
-    // Quantity validation
     if (!formData.quantity || formData.quantity < 1) {
       newErrors.quantity = "Quantity must be at least 1";
     }
@@ -137,22 +202,111 @@ function OrderForm({
     return Object.keys(newErrors).length === 0;
   };
 
+  const validateStep3 = () => {
+    const newErrors = {};
+
+    // Fabric details validation
+    if (!formData.fabricDetails.type.trim()) {
+      newErrors["fabricDetails.type"] = "Fabric type is required";
+    }
+
+    // Fabric measurements validation (only if provided by tailor)
+    if (formData.fabricDetails.providedBy === "tailor") {
+      if (!formData.fabricDetails.measurements.length) {
+        newErrors["fabricDetails.measurements.length"] =
+          "Fabric length is required";
+      }
+      if (!formData.fabricDetails.measurements.width) {
+        newErrors["fabricDetails.measurements.width"] =
+          "Fabric width is required";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep4 = () => {
+    const newErrors = {};
+
+    // Design details validation
+    if (!formData.designDetails.description.trim()) {
+      newErrors["designDetails.description"] = "Design description is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleNext = () => {
     if (step === 2 && validateStep2()) {
-      // For now, just show success since we're only implementing basic info
+      setStep(3);
+    } else if (step === 3 && validateStep3()) {
+      setStep(4);
+    } else if (step === 4 && validateStep4()) {
       handleSubmit();
     }
   };
 
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
+      setErrors({});
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    setIsSavingDraft(true);
+
+    try {
+      // Save to localStorage as draft
+      const draftData = {
+        selectedClient,
+        formData,
+        step,
+        savedAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem("orderDraft", JSON.stringify(draftData));
+
+      alert("Draft saved successfully! You can continue later.");
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      alert("Failed to save draft. Please try again.");
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  const loadDraft = () => {
+    try {
+      const draftData = localStorage.getItem("orderDraft");
+      if (draftData) {
+        const parsed = JSON.parse(draftData);
+        setSelectedClient(parsed.selectedClient);
+        setFormData(parsed.formData);
+        setStep(parsed.step);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error loading draft:", error);
+      return false;
+    }
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem("orderDraft");
+  };
+
   const handleSubmit = async () => {
-    if (!validateStep2()) {
+    if (!validateStep2() || !validateStep3() || !validateStep4()) {
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // This will be expanded in later tasks to include more order details
       const orderData = {
         clientId: selectedClient.id,
         clientName: selectedClient.name,
@@ -162,9 +316,29 @@ function OrderForm({
         priority: formData.priority,
         garmentType: formData.garmentType,
         quantity: formData.quantity,
+        fabricDetails: {
+          type: formData.fabricDetails.type,
+          providedBy: formData.fabricDetails.providedBy,
+          measurements:
+            formData.fabricDetails.providedBy === "tailor"
+              ? {
+                  length:
+                    parseFloat(formData.fabricDetails.measurements.length) || 0,
+                  width:
+                    parseFloat(formData.fabricDetails.measurements.width) || 0,
+                }
+              : null,
+          notes: formData.fabricDetails.notes,
+        },
+        designDetails: {
+          description: formData.designDetails.description,
+          referenceNumber: formData.designDetails.referenceNumber,
+          specialInstructions: formData.designDetails.specialInstructions,
+        },
       };
 
       onSuccess(orderData);
+      clearDraft(); // Clear draft on successful submission
       onClose();
       resetForm();
     } catch (error) {
@@ -177,17 +351,29 @@ function OrderForm({
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
+      if (confirm("You have unsaved changes. Do you want to save as draft?")) {
+        handleSaveDraft();
+      }
       onClose();
       resetForm();
     }
   };
 
-  const handleBack = () => {
-    if (step === 2) {
-      setStep(1);
-      setErrors({});
+  // Check for draft on mount
+  useEffect(() => {
+    if (isOpen && !preSelectedClientId) {
+      const hasDraft = loadDraft();
+      if (hasDraft) {
+        const confirmLoad = confirm(
+          "You have a saved draft. Would you like to continue?"
+        );
+        if (!confirmLoad) {
+          clearDraft();
+          resetForm();
+        }
+      }
     }
-  };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -198,6 +384,20 @@ function OrderForm({
     { value: "kurta", label: "Kurta" },
     { value: "pant", label: "Pant" },
     { value: "saree_blouse", label: "Saree Blouse" },
+  ];
+
+  const fabricTypes = [
+    "Cotton",
+    "Silk",
+    "Chiffon",
+    "Georgette",
+    "Linen",
+    "Polyester",
+    "Crepe",
+    "Velvet",
+    "Satin",
+    "Brocade",
+    "Other",
   ];
 
   return (
@@ -214,18 +414,37 @@ function OrderForm({
               Create New Order
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Step {step} of 2: {step === 1 ? "Select Client" : "Order Details"}
+              Step {step} of 4:{" "}
+              {step === 1
+                ? "Select Client"
+                : step === 2
+                ? "Order Details"
+                : step === 3
+                ? "Fabric Details"
+                : "Design Details"}
             </p>
           </div>
-          <button
-            onClick={() => {
-              onClose();
-              resetForm();
-            }}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="h-5 w-5 text-gray-500" />
-          </button>
+          <div className="flex items-center gap-2">
+            {step > 1 && (
+              <button
+                onClick={handleSaveDraft}
+                disabled={isSavingDraft}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Save as draft"
+              >
+                <Save className="h-5 w-5 text-gray-600" />
+              </button>
+            )}
+            <button
+              onClick={() => {
+                onClose();
+                resetForm();
+              }}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-500" />
+            </button>
+          </div>
         </div>
 
         {/* Step 1: Client Selection */}
@@ -333,9 +552,6 @@ function OrderForm({
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                Auto-filled with today's date
-              </p>
             </div>
 
             {/* Delivery Date */}
@@ -448,14 +664,272 @@ function OrderForm({
                 </p>
               )}
             </div>
+          </div>
+        )}
 
-            {/* Info Box */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-gray-700">
-                <p className="font-medium">Order ID will be auto-generated</p>
-                <p className="mt-1 text-gray-600">
-                  Format: ORD-YYYYMMDD-XXXX (e.g., ORD-20251103-0001)
+        {/* Step 3: Fabric Details */}
+        {step === 3 && (
+          <div className="p-6 space-y-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Scissors className="h-6 w-6 text-purple-600" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Fabric Details
+              </h3>
+            </div>
+
+            {/* Fabric Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Fabric Type <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.fabricDetails.type}
+                onChange={(e) =>
+                  handleNestedChange("fabricDetails", "type", e.target.value)
+                }
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors["fabricDetails.type"]
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
+              >
+                <option value="">Select fabric type...</option>
+                {fabricTypes.map((fabric) => (
+                  <option key={fabric} value={fabric}>
+                    {fabric}
+                  </option>
+                ))}
+              </select>
+              {errors["fabricDetails.type"] && (
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors["fabricDetails.type"]}
+                </p>
+              )}
+            </div>
+
+            {/* Provided By */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Fabric Provided By <span className="text-red-500">*</span>
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    value="client"
+                    checked={formData.fabricDetails.providedBy === "client"}
+                    onChange={(e) =>
+                      handleNestedChange(
+                        "fabricDetails",
+                        "providedBy",
+                        e.target.value
+                      )
+                    }
+                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Client</span>
+                </label>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    value="tailor"
+                    checked={formData.fabricDetails.providedBy === "tailor"}
+                    onChange={(e) =>
+                      handleNestedChange(
+                        "fabricDetails",
+                        "providedBy",
+                        e.target.value
+                      )
+                    }
+                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Tailor/Shop</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Fabric Measurements (only if provided by tailor) */}
+            {formData.fabricDetails.providedBy === "tailor" && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
+                <p className="text-sm font-medium text-purple-900">
+                  Fabric Measurements
+                </p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Length (meters) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={formData.fabricDetails.measurements.length}
+                      onChange={(e) =>
+                        handleFabricMeasurementChange("length", e.target.value)
+                      }
+                      placeholder="0.0"
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        errors["fabricDetails.measurements.length"]
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    {errors["fabricDetails.measurements.length"] && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors["fabricDetails.measurements.length"]}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Width (meters) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={formData.fabricDetails.measurements.width}
+                      onChange={(e) =>
+                        handleFabricMeasurementChange("width", e.target.value)
+                      }
+                      placeholder="0.0"
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        errors["fabricDetails.measurements.width"]
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                    {errors["fabricDetails.measurements.width"] && (
+                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {errors["fabricDetails.measurements.width"]}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Fabric Notes */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Fabric Notes (Optional)
+              </label>
+              <textarea
+                value={formData.fabricDetails.notes}
+                onChange={(e) =>
+                  handleNestedChange("fabricDetails", "notes", e.target.value)
+                }
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="E.g., Color preferences, pattern details, fabric care instructions..."
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: Design Details */}
+        {step === 4 && (
+          <div className="p-6 space-y-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Palette className="h-6 w-6 text-pink-600" />
+              <h3 className="text-lg font-semibold text-gray-900">
+                Design Details
+              </h3>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Design Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={formData.designDetails.description}
+                onChange={(e) =>
+                  handleNestedChange(
+                    "designDetails",
+                    "description",
+                    e.target.value
+                  )
+                }
+                rows={4}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors["designDetails.description"]
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
+                placeholder="Describe the design, style, embellishments, etc..."
+              />
+              {errors["designDetails.description"] && (
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors["designDetails.description"]}
+                </p>
+              )}
+            </div>
+
+            {/* Reference Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reference Number (Optional)
+              </label>
+              <input
+                type="text"
+                value={formData.designDetails.referenceNumber}
+                onChange={(e) =>
+                  handleNestedChange(
+                    "designDetails",
+                    "referenceNumber",
+                    e.target.value
+                  )
+                }
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="E.g., Design catalog number, image reference, etc."
+              />
+            </div>
+
+            {/* Special Instructions */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Special Instructions (Optional)
+              </label>
+              <textarea
+                value={formData.designDetails.specialInstructions}
+                onChange={(e) =>
+                  handleNestedChange(
+                    "designDetails",
+                    "specialInstructions",
+                    e.target.value
+                  )
+                }
+                rows={3}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Any specific requirements, fitting preferences, modifications needed..."
+              />
+            </div>
+
+            {/* Summary */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-2">
+              <p className="text-sm font-medium text-gray-900">Order Summary</p>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p>
+                  <span className="font-medium">Client:</span>{" "}
+                  {selectedClient?.name}
+                </p>
+                <p>
+                  <span className="font-medium">Garment:</span>{" "}
+                  {formData.garmentType} (x{formData.quantity})
+                </p>
+                <p>
+                  <span className="font-medium">Delivery:</span>{" "}
+                  {new Date(formData.deliveryDate).toLocaleDateString("en-IN")}
+                </p>
+                <p>
+                  <span className="font-medium">Fabric:</span>{" "}
+                  {formData.fabricDetails.type} (Provided by{" "}
+                  {formData.fabricDetails.providedBy})
                 </p>
               </div>
             </div>
@@ -495,8 +969,10 @@ function OrderForm({
                 {isSubmitting ? (
                   <span className="flex items-center justify-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Creating...
+                    {step === 4 ? "Creating..." : "Processing..."}
                   </span>
+                ) : step === 4 ? (
+                  "Create Order"
                 ) : (
                   "Continue"
                 )}
