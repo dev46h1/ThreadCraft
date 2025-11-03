@@ -156,31 +156,33 @@ function ClientDetails() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={() => navigate("/clients")}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="h-6 w-6 text-gray-600" />
-        </button>
-        <div className="flex-1">
-          <h2 className="text-3xl font-bold text-gray-900">{client.name}</h2>
-          <p className="text-sm text-gray-500 mt-1">{client.id}</p>
+      {/* Colorful Page Header */}
+      <div className="relative overflow-hidden rounded-xl mb-6 border border-cyan-200 bg-gradient-to-r from-cyan-50 via-sky-50 to-blue-50">
+        <div className="flex items-center gap-4 p-6">
+          <button
+            onClick={() => navigate("/clients")}
+            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="h-6 w-6 text-gray-600" />
+          </button>
+          <div className="flex-1">
+            <h2 className="text-3xl font-bold text-gray-900">{client.name}</h2>
+            <p className="text-sm text-gray-500 mt-1">{client.id}</p>
+          </div>
+          <button
+            onClick={() => setIsEditFormOpen(true)}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-white/60 transition-colors font-medium flex items-center gap-2 bg-white/40"
+          >
+            <Edit2 className="h-4 w-4" />
+            Edit Client
+          </button>
+          <button
+            onClick={() => navigate(`/orders/new?clientId=${client.id}`)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+          >
+            + New Order
+          </button>
         </div>
-        <button
-          onClick={() => setIsEditFormOpen(true)}
-          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center gap-2"
-        >
-          <Edit2 className="h-4 w-4" />
-          Edit Client
-        </button>
-        <button
-          onClick={() => navigate(`/orders/new?clientId=${client.id}`)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          + New Order
-        </button>
       </div>
 
       {/* Client Info Card */}

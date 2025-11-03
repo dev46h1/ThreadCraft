@@ -51,6 +51,9 @@ function OrderDetails() {
 
   const handleUpdateStatus = async () => {
     if (!order) return;
+    if (!newStatus || newStatus === order.status) {
+      return;
+    }
     await orderService.updateStatus(order.id, newStatus, statusNotes);
     setStatusNotes("");
     await load();
@@ -102,20 +105,23 @@ function OrderDetails() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="h-6 w-6 text-gray-600" />
-        </button>
-        <div className="flex-1">
-          <h2 className="text-3xl font-bold text-gray-900">{order.id}</h2>
-          <p className="text-sm text-gray-500">Order Details</p>
+      {/* Colorful Page Header */}
+      <div className="relative overflow-hidden rounded-xl mb-6 border border-purple-200 bg-gradient-to-r from-purple-50 via-violet-50 to-fuchsia-50">
+        <div className="flex items-center gap-3 p-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="h-6 w-6 text-gray-600" />
+          </button>
+          <div className="flex-1">
+            <h2 className="text-3xl font-bold text-gray-900">{order.id}</h2>
+            <p className="text-sm text-gray-500">Order Details</p>
+          </div>
+          <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${getStatusColor(order.status)}`}>
+            {order.status}
+          </span>
         </div>
-        <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${getStatusColor(order.status)}`}>
-          {order.status}
-        </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -188,15 +194,18 @@ function OrderDetails() {
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Status History</h3>
             <div className="space-y-3">
-              {order.statusHistory?.map((s, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(s.status)}`}>{s.status}</span>
-                    <span className="text-sm text-gray-600">{formatDate(s.timestamp)}</span>
+              {order.statusHistory?.map((s, idx) => {
+                const isCurrent = s.status === order.status;
+                return (
+                  <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border ${isCurrent ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"}`}>
+                    <div className="flex items-center gap-3">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(s.status)}`}>{s.status}{isCurrent ? " • current" : ""}</span>
+                      <span className="text-sm text-gray-600">{formatDate(s.timestamp)}</span>
+                    </div>
+                    {s.notes && <span className="text-sm text-gray-500">{s.notes}</span>}
                   </div>
-                  {s.notes && <span className="text-sm text-gray-500">{s.notes}</span>}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
