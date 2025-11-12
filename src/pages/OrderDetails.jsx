@@ -63,6 +63,7 @@ function OrderDetails() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("id");
+  const pendingDelivery = searchParams.get("pendingDelivery") === "true";
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -87,7 +88,8 @@ function OrderDetails() {
     discountType: "amount",
     discountValue: 0,
   });
-  const [isStatusHistoryCollapsed, setIsStatusHistoryCollapsed] = useState(true);
+  const [isStatusHistoryCollapsed, setIsStatusHistoryCollapsed] =
+    useState(true);
 
   useEffect(() => {
     if (orderId) load();
@@ -97,8 +99,15 @@ function OrderDetails() {
     setLoading(true);
     const data = await orderService.getById(orderId);
     setOrder(data);
-    setNewStatus(data?.status || "");
-    setCurrentStatus(data?.status || "");
+    // If navigating with pendingDelivery param and there's a balance, show confirmation
+    if (pendingDelivery && (data?.balanceDue || 0) > 0) {
+      setNewStatus("delivered");
+      setCurrentStatus("delivered");
+      setPendingDeliveryConfirm(true);
+    } else {
+      setNewStatus(data?.status || "");
+      setCurrentStatus(data?.status || "");
+    }
     // Initialize pricing form from order data
     if (data?.pricing) {
       // Initialize items with pricing from order
@@ -106,13 +115,16 @@ function OrderDetails() {
         garmentType: item.garmentType || "",
         quantity: item.quantity || 0,
         unitPrice: item.unitPrice || 0,
-        lineTotal: item.lineTotal || (item.quantity || 0) * (item.unitPrice || 0),
+        lineTotal:
+          item.lineTotal || (item.quantity || 0) * (item.unitPrice || 0),
       }));
-      
+
       setPricingForm({
         items: itemsWithPricing,
         customizations: data.pricing.customizations || [],
-        discountType: data.pricing.discount?.reason?.includes("%") ? "percent" : "amount",
+        discountType: data.pricing.discount?.reason?.includes("%")
+          ? "percent"
+          : "amount",
         discountValue: data.pricing.discount?.amount || 0,
       });
     }
@@ -232,13 +244,16 @@ function OrderDetails() {
         garmentType: item.garmentType || "",
         quantity: item.quantity || 0,
         unitPrice: item.unitPrice || 0,
-        lineTotal: item.lineTotal || (item.quantity || 0) * (item.unitPrice || 0),
+        lineTotal:
+          item.lineTotal || (item.quantity || 0) * (item.unitPrice || 0),
       }));
-      
+
       setPricingForm({
         items: itemsWithPricing,
         customizations: order.pricing.customizations || [],
-        discountType: order.pricing.discount?.reason?.includes("%") ? "percent" : "amount",
+        discountType: order.pricing.discount?.reason?.includes("%")
+          ? "percent"
+          : "amount",
         discountValue: order.pricing.discount?.amount || 0,
       });
     }
@@ -260,37 +275,41 @@ function OrderDetails() {
     const subtotal = itemsTotal + custom;
     const discountAmt =
       pricingForm.discountType === "percent"
-        ? Math.min(100, Math.max(0, Number(pricingForm.discountValue) || 0)) * (subtotal / 100)
+        ? Math.min(100, Math.max(0, Number(pricingForm.discountValue) || 0)) *
+          (subtotal / 100)
         : Number(pricingForm.discountValue) || 0;
     const total = Math.max(0, Math.round(subtotal - discountAmt));
 
-      // Update pricing and items
-      const updatedPricing = {
-        itemsTotal,
-        customizations: (pricingForm.customizations || []).map((c) => ({
-          description: c.description || "",
-          amount: Number(c.amount) || 0,
-        })),
-        subtotal,
-        discount: {
-          amount: discountAmt,
-          reason: pricingForm.discountType === "percent" ? `${pricingForm.discountValue}%` : "",
-        },
-        total,
-      };
+    // Update pricing and items
+    const updatedPricing = {
+      itemsTotal,
+      customizations: (pricingForm.customizations || []).map((c) => ({
+        description: c.description || "",
+        amount: Number(c.amount) || 0,
+      })),
+      subtotal,
+      discount: {
+        amount: discountAmt,
+        reason:
+          pricingForm.discountType === "percent"
+            ? `${pricingForm.discountValue}%`
+            : "",
+      },
+      total,
+    };
 
-      // Update items with new pricing
-      const updatedItems = (order.items || []).map((item, idx) => {
-        const pricingItem = pricingForm.items[idx];
-        if (pricingItem) {
-          return {
-            ...item,
-            unitPrice: Number(pricingItem.unitPrice) || 0,
-            lineTotal: Number(pricingItem.lineTotal) || 0,
-          };
-        }
-        return item;
-      });
+    // Update items with new pricing
+    const updatedItems = (order.items || []).map((item, idx) => {
+      const pricingItem = pricingForm.items[idx];
+      if (pricingItem) {
+        return {
+          ...item,
+          unitPrice: Number(pricingItem.unitPrice) || 0,
+          lineTotal: Number(pricingItem.lineTotal) || 0,
+        };
+      }
+      return item;
+    });
 
     // Recalculate balance due based on new total
     const newBalanceDue = total - (order.totalPaid || 0);
@@ -315,7 +334,7 @@ function OrderDetails() {
     // Update local state immediately for instant UI update
     setOrder(updatedOrder);
     setIsEditingPricing(false);
-    
+
     // Reload to ensure everything is in sync
     await load();
   };
@@ -391,24 +410,30 @@ function OrderDetails() {
         <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <div className="relative z-10 p-5">
           <div className="flex items-center gap-3 mb-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
-          >
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+            >
               <ArrowLeft className="h-6 w-6 text-primary" />
-          </button>
-          <div className="flex-1">
+            </button>
+            <div className="flex-1">
               <h2 className="text-3xl md:text-4xl font-heading font-bold text-primary">
                 {order.id}
               </h2>
-          </div>
+            </div>
             <select
               className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-200 ${getStatusColor(
                 currentStatus || order.status
-              )} ${order.status === "delivered" || order.status === "cancelled" ? "cursor-not-allowed opacity-75" : "cursor-pointer hover:opacity-90"}`}
+              )} ${
+                order.status === "delivered" || order.status === "cancelled"
+                  ? "cursor-not-allowed opacity-75"
+                  : "cursor-pointer hover:opacity-90"
+              }`}
               value={currentStatus || order.status}
               onChange={handleStatusChange}
-              disabled={order.status === "delivered" || order.status === "cancelled"}
+              disabled={
+                order.status === "delivered" || order.status === "cancelled"
+              }
             >
               {[
                 "placed",
@@ -427,29 +452,33 @@ function OrderDetails() {
                 </option>
               ))}
             </select>
-          {order.status !== "delivered" && order.status !== "cancelled" && (
-            <button
-              onClick={() => navigate(`/orders/edit?id=${order.id}`)}
-              className="p-2 hover:bg-white/50 rounded-lg transition-colors"
-              title="Edit order"
-            >
-              <Pencil className="h-5 w-5 text-primary" />
-            </button>
-          )}
+            {order.status !== "delivered" && order.status !== "cancelled" && (
+              <button
+                onClick={() => navigate(`/orders/edit?id=${order.id}`)}
+                className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                title="Edit order"
+              >
+                <Pencil className="h-5 w-5 text-primary" />
+              </button>
+            )}
           </div>
-          
+
           {/* Client Details and Order Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t border-green-200">
             <div className="flex items-center gap-2 text-sm">
               <User className="h-4 w-4 text-gray-500" />
               <div>
                 <div className="text-gray-500 text-xs">Client</div>
-                <div className="font-medium text-gray-900">{order.clientName}</div>
+                <div className="font-medium text-gray-900">
+                  {order.clientName}
+                </div>
               </div>
             </div>
             <div className="text-sm">
               <div className="text-gray-500 text-xs">Phone</div>
-              <div className="font-medium text-gray-900">{order.clientPhone}</div>
+              <div className="font-medium text-gray-900">
+                {order.clientPhone}
+              </div>
             </div>
             <div className="text-sm">
               <div className="text-gray-500 text-xs">Order Date</div>
@@ -460,13 +489,17 @@ function OrderDetails() {
             </div>
             <div className="text-sm">
               <div className="text-gray-500 text-xs">Delivery Date</div>
-              <div className="font-medium text-gray-900">{formatDate(order.deliveryDate)}</div>
+              <div className="font-medium text-gray-900">
+                {formatDate(order.deliveryDate)}
+              </div>
             </div>
             <div className="text-sm">
               <div className="text-gray-500 text-xs">Payment Amount</div>
               <div className="font-medium text-gray-900 flex items-center gap-1">
-                <ReceiptIndianRupee className="h-3 w-3 text-gray-400" />
-                ₹{(order.pricing?.total || order.totalPaid || 0).toLocaleString("en-IN")}
+                <ReceiptIndianRupee className="h-3 w-3 text-gray-400" />₹
+                {(order.pricing?.total || order.totalPaid || 0).toLocaleString(
+                  "en-IN"
+                )}
               </div>
             </div>
           </div>
@@ -485,38 +518,48 @@ function OrderDetails() {
               {order.items && order.items.length > 0 ? (
                 <div className="space-y-6">
                   {order.items.map((item, idx) => {
-                    const snapshot = item.measurementSnapshot || order.measurementSnapshot;
-                    const hasMeasurements = snapshot && Object.keys(snapshot).length > 0;
-                    
+                    const snapshot =
+                      item.measurementSnapshot || order.measurementSnapshot;
+                    const hasMeasurements =
+                      snapshot && Object.keys(snapshot).length > 0;
+
                     if (!hasMeasurements) return null;
-                    
+
                     const garmentType = item.garmentType || "custom";
                     const fields = MEASUREMENT_FIELDS[garmentType] || [];
-                    const predefinedFieldNames = new Set(fields.map((f) => f.name));
+                    const predefinedFieldNames = new Set(
+                      fields.map((f) => f.name)
+                    );
                     const requiredFields = new Set(
                       fields.filter((f) => f.required).map((f) => f.name)
                     );
-                    
+
                     // Get all predefined field names across ALL garment types
                     const allPredefinedFieldNames = new Set();
-                    Object.values(MEASUREMENT_FIELDS).forEach((garmentFields) => {
-                      garmentFields.forEach((field) => {
-                        allPredefinedFieldNames.add(field.name);
-                      });
-                    });
-                    
+                    Object.values(MEASUREMENT_FIELDS).forEach(
+                      (garmentFields) => {
+                        garmentFields.forEach((field) => {
+                          allPredefinedFieldNames.add(field.name);
+                        });
+                      }
+                    );
+
                     // Get field label from MEASUREMENT_FIELDS or format the key
                     const getFieldLabel = (key) => {
                       // Try to find in current garment type first
                       const field = fields.find((f) => f.name === key);
                       if (field) return field.label;
-                      
+
                       // Try to find in other garment types
-                      for (const garmentFields of Object.values(MEASUREMENT_FIELDS)) {
-                        const foundField = garmentFields.find((f) => f.name === key);
+                      for (const garmentFields of Object.values(
+                        MEASUREMENT_FIELDS
+                      )) {
+                        const foundField = garmentFields.find(
+                          (f) => f.name === key
+                        );
                         if (foundField) return foundField.label;
                       }
-                      
+
                       // Format label from camelCase to readable format
                       return key
                         .replace(/([A-Z])/g, " $1")
@@ -524,15 +567,18 @@ function OrderDetails() {
                         .replace(/_/g, " ")
                         .trim();
                     };
-                    
+
                     // Separate measurements into: required predefined, optional predefined, unused (other types), and custom
                     const requiredMeas = [];
                     const optionalMeas = [];
                     const unusedMeas = [];
                     const customMeas = [];
-                    
+
                     Object.entries(snapshot)
-                      .filter(([key, value]) => value !== "" && value !== null && value !== undefined)
+                      .filter(
+                        ([key, value]) =>
+                          value !== "" && value !== null && value !== undefined
+                      )
                       .forEach(([key, value]) => {
                         if (predefinedFieldNames.has(key)) {
                           // This field is for the current garment type
@@ -549,43 +595,63 @@ function OrderDetails() {
                           customMeas.push([key, value]);
                         }
                       });
-                    
+
                     // Sort each category by field order in MEASUREMENT_FIELDS
                     const sortByFieldOrder = (entries) => {
                       return entries.sort(([keyA], [keyB]) => {
                         const idxA = fields.findIndex((f) => f.name === keyA);
                         const idxB = fields.findIndex((f) => f.name === keyB);
-                        if (idxA === -1 && idxB === -1) return keyA.localeCompare(keyB);
+                        if (idxA === -1 && idxB === -1)
+                          return keyA.localeCompare(keyB);
                         if (idxA === -1) return 1;
                         if (idxB === -1) return -1;
                         return idxA - idxB;
                       });
                     };
-                    
+
                     const sortedRequired = sortByFieldOrder(requiredMeas);
                     const sortedOptional = sortByFieldOrder(optionalMeas);
-                    const sortedUnused = unusedMeas.sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
-                    const sortedCustom = customMeas.sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
-                    
+                    const sortedUnused = unusedMeas.sort(([keyA], [keyB]) =>
+                      keyA.localeCompare(keyB)
+                    );
+                    const sortedCustom = customMeas.sort(([keyA], [keyB]) =>
+                      keyA.localeCompare(keyB)
+                    );
+
                     // Combine: required first, then optional, then unused (red), then custom
-                    const allMeasurements = [...sortedRequired, ...sortedOptional, ...sortedUnused, ...sortedCustom];
-                    
+                    const allMeasurements = [
+                      ...sortedRequired,
+                      ...sortedOptional,
+                      ...sortedUnused,
+                      ...sortedCustom,
+                    ];
+
                     if (allMeasurements.length === 0) return null;
-                    
+
                     return (
-                      <div key={idx} className="border-2 border-green-200 rounded-xl p-4 bg-gradient-to-br from-green-50 to-emerald-50">
+                      <div
+                        key={idx}
+                        className="border-2 border-green-200 rounded-xl p-4 bg-gradient-to-br from-green-50 to-emerald-50"
+                      >
                         <div className="flex items-center gap-2 mb-4">
                           <Ruler className="h-5 w-5 text-green-600" />
                           <h4 className="text-lg font-semibold text-primary capitalize">
-                            {item.garmentType?.replace(/_/g, " ") || `Item ${idx + 1}`}
+                            {item.garmentType?.replace(/_/g, " ") ||
+                              `Item ${idx + 1}`}
                           </h4>
-                          <span className="text-xs text-muted">(Qty: {item.quantity || 1})</span>
-            </div>
+                          <span className="text-xs text-muted">
+                            (Qty: {item.quantity || 1})
+                          </span>
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                           {allMeasurements.map(([key, value], measIdx) => {
                             const isRequired = requiredFields.has(key);
-                            const isUnused = unusedMeas.some(([k]) => k === key);
-                            const isCustom = !predefinedFieldNames.has(key) && !allPredefinedFieldNames.has(key);
+                            const isUnused = unusedMeas.some(
+                              ([k]) => k === key
+                            );
+                            const isCustom =
+                              !predefinedFieldNames.has(key) &&
+                              !allPredefinedFieldNames.has(key);
                             return (
                               <div
                                 key={key}
@@ -593,15 +659,17 @@ function OrderDetails() {
                                   isRequired ? "font-semibold" : ""
                                 }`}
                               >
-                                <span className={`text-sm ${
-                                  isRequired 
-                                    ? "text-green-700" 
-                                    : isUnused 
-                                    ? "text-red-600" 
-                                    : isCustom 
-                                    ? "text-purple-600" 
-                                    : "text-gray-600"
-                                }`}>
+                                <span
+                                  className={`text-sm ${
+                                    isRequired
+                                      ? "text-green-700"
+                                      : isUnused
+                                      ? "text-red-600"
+                                      : isCustom
+                                      ? "text-purple-600"
+                                      : "text-gray-600"
+                                  }`}
+                                >
                                   {getFieldLabel(key)}
                                   {isUnused && (
                                     <span className="ml-1 text-xs">
@@ -614,26 +682,29 @@ function OrderDetails() {
                                     </span>
                                   )}
                                 </span>
-                                <span className={`text-sm font-medium ${
-                                  isRequired 
-                                    ? "text-green-900" 
-                                    : isUnused 
-                                    ? "text-red-800" 
-                                    : isCustom 
-                                    ? "text-purple-800" 
-                                    : "text-gray-900"
-                                }`}>
+                                <span
+                                  className={`text-sm font-medium ${
+                                    isRequired
+                                      ? "text-green-900"
+                                      : isUnused
+                                      ? "text-red-800"
+                                      : isCustom
+                                      ? "text-purple-800"
+                                      : "text-gray-900"
+                                  }`}
+                                >
                                   {value} {order.measurementUnit || "inches"}
                                 </span>
-          </div>
+                              </div>
                             );
                           })}
                         </div>
                       </div>
                     );
                   })}
-                  {order.items.every(item => {
-                    const snapshot = item.measurementSnapshot || order.measurementSnapshot;
+                  {order.items.every((item) => {
+                    const snapshot =
+                      item.measurementSnapshot || order.measurementSnapshot;
                     return !snapshot || Object.keys(snapshot).length === 0;
                   }) && (
                     <div className="text-sm text-muted flex items-center gap-2">
@@ -642,16 +713,19 @@ function OrderDetails() {
                     </div>
                   )}
                 </div>
-              ) : order.measurementSnapshot && Object.keys(order.measurementSnapshot).length > 0 ? (
+              ) : order.measurementSnapshot &&
+                Object.keys(order.measurementSnapshot).length > 0 ? (
                 (() => {
                   // For legacy orders without items, filter by order's garmentType if available
                   const garmentType = order.garmentType || "custom";
                   const fields = MEASUREMENT_FIELDS[garmentType] || [];
-                  const predefinedFieldNames = new Set(fields.map((f) => f.name));
+                  const predefinedFieldNames = new Set(
+                    fields.map((f) => f.name)
+                  );
                   const requiredFields = new Set(
                     fields.filter((f) => f.required).map((f) => f.name)
                   );
-                  
+
                   // Get all predefined field names across ALL garment types
                   const allPredefinedFieldNames = new Set();
                   Object.values(MEASUREMENT_FIELDS).forEach((garmentFields) => {
@@ -659,33 +733,40 @@ function OrderDetails() {
                       allPredefinedFieldNames.add(field.name);
                     });
                   });
-                  
+
                   const getFieldLabel = (key) => {
                     // Try to find in current garment type first
                     const field = fields.find((f) => f.name === key);
                     if (field) return field.label;
-                    
+
                     // Try to find in other garment types
-                    for (const garmentFields of Object.values(MEASUREMENT_FIELDS)) {
-                      const foundField = garmentFields.find((f) => f.name === key);
+                    for (const garmentFields of Object.values(
+                      MEASUREMENT_FIELDS
+                    )) {
+                      const foundField = garmentFields.find(
+                        (f) => f.name === key
+                      );
                       if (foundField) return foundField.label;
                     }
-                    
+
                     return key
                       .replace(/([A-Z])/g, " $1")
                       .replace(/^./, (str) => str.toUpperCase())
                       .replace(/_/g, " ")
                       .trim();
                   };
-                  
+
                   // Separate measurements
                   const requiredMeas = [];
                   const optionalMeas = [];
                   const unusedMeas = [];
                   const customMeas = [];
-                  
+
                   Object.entries(order.measurementSnapshot)
-                    .filter(([key, value]) => value !== "" && value !== null && value !== undefined)
+                    .filter(
+                      ([key, value]) =>
+                        value !== "" && value !== null && value !== undefined
+                    )
                     .forEach(([key, value]) => {
                       if (predefinedFieldNames.has(key)) {
                         if (requiredFields.has(key)) {
@@ -700,40 +781,57 @@ function OrderDetails() {
                         customMeas.push([key, value]);
                       }
                     });
-                  
+
                   // Sort by field order
                   const sortByFieldOrder = (entries) => {
                     return entries.sort(([keyA], [keyB]) => {
                       const idxA = fields.findIndex((f) => f.name === keyA);
                       const idxB = fields.findIndex((f) => f.name === keyB);
-                      if (idxA === -1 && idxB === -1) return keyA.localeCompare(keyB);
+                      if (idxA === -1 && idxB === -1)
+                        return keyA.localeCompare(keyB);
                       if (idxA === -1) return 1;
                       if (idxB === -1) return -1;
                       return idxA - idxB;
                     });
                   };
-                  
+
                   const sortedRequired = sortByFieldOrder(requiredMeas);
                   const sortedOptional = sortByFieldOrder(optionalMeas);
-                  const sortedUnused = unusedMeas.sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
-                  const sortedCustom = customMeas.sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
-                  const allMeasurements = [...sortedRequired, ...sortedOptional, ...sortedUnused, ...sortedCustom];
-                  
+                  const sortedUnused = unusedMeas.sort(([keyA], [keyB]) =>
+                    keyA.localeCompare(keyB)
+                  );
+                  const sortedCustom = customMeas.sort(([keyA], [keyB]) =>
+                    keyA.localeCompare(keyB)
+                  );
+                  const allMeasurements = [
+                    ...sortedRequired,
+                    ...sortedOptional,
+                    ...sortedUnused,
+                    ...sortedCustom,
+                  ];
+
                   if (allMeasurements.length === 0) return null;
-                  
+
                   return (
                     <div className="border-2 border-green-200 rounded-xl p-4 bg-gradient-to-br from-green-50 to-emerald-50">
                       <div className="flex items-center gap-2 mb-4">
                         <Ruler className="h-5 w-5 text-green-600" />
                         <h4 className="text-lg font-semibold text-primary capitalize">
-                          {order.garmentType ? `${order.garmentType.replace(/_/g, " ")} Measurements` : "Order Measurements"}
+                          {order.garmentType
+                            ? `${order.garmentType.replace(
+                                /_/g,
+                                " "
+                              )} Measurements`
+                            : "Order Measurements"}
                         </h4>
-              </div>
+                      </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                         {allMeasurements.map(([key, value]) => {
                           const isRequired = requiredFields.has(key);
                           const isUnused = unusedMeas.some(([k]) => k === key);
-                          const isCustom = !predefinedFieldNames.has(key) && !allPredefinedFieldNames.has(key);
+                          const isCustom =
+                            !predefinedFieldNames.has(key) &&
+                            !allPredefinedFieldNames.has(key);
                           return (
                             <div
                               key={key}
@@ -741,20 +839,20 @@ function OrderDetails() {
                                 isRequired ? "font-semibold" : ""
                               }`}
                             >
-                              <span className={`text-sm ${
-                                isRequired 
-                                  ? "text-green-700" 
-                                  : isUnused 
-                                  ? "text-red-600" 
-                                  : isCustom 
-                                  ? "text-purple-600" 
-                                  : "text-gray-600"
-                              }`}>
+                              <span
+                                className={`text-sm ${
+                                  isRequired
+                                    ? "text-green-700"
+                                    : isUnused
+                                    ? "text-red-600"
+                                    : isCustom
+                                    ? "text-purple-600"
+                                    : "text-gray-600"
+                                }`}
+                              >
                                 {getFieldLabel(key)}
                                 {isUnused && (
-                                  <span className="ml-1 text-xs">
-                                    (unused)
-                                  </span>
+                                  <span className="ml-1 text-xs">(unused)</span>
                                 )}
                                 {isCustom && (
                                   <span className="ml-1 text-xs underline decoration-dotted">
@@ -762,18 +860,20 @@ function OrderDetails() {
                                   </span>
                                 )}
                               </span>
-                              <span className={`text-sm font-medium ${
-                                isRequired 
-                                  ? "text-green-900" 
-                                  : isUnused 
-                                  ? "text-red-800" 
-                                  : isCustom 
-                                  ? "text-purple-800" 
-                                  : "text-gray-900"
-                              }`}>
+                              <span
+                                className={`text-sm font-medium ${
+                                  isRequired
+                                    ? "text-green-900"
+                                    : isUnused
+                                    ? "text-red-800"
+                                    : isCustom
+                                    ? "text-purple-800"
+                                    : "text-gray-900"
+                                }`}
+                              >
                                 {value} {order.measurementUnit || "inches"}
                               </span>
-              </div>
+                            </div>
                           );
                         })}
                       </div>
@@ -797,19 +897,21 @@ function OrderDetails() {
                 <div className="flex items-center gap-3">
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg">
                     <DollarSign className="w-6 h-6" />
-              </div>
+                  </div>
                   <h3 className="text-2xl font-heading font-bold text-primary">
                     Pricing
                   </h3>
-            </div>
-                {!isEditingPricing && order.status !== "delivered" && order.status !== "cancelled" && (
-                  <button
-                    onClick={handleEditPricing}
-                    className="px-4 py-2 border-2 border-purple-200 rounded-lg hover:bg-purple-50 text-purple-700 font-medium transition-all duration-200 flex items-center gap-2"
-                  >
-                    <Pencil className="h-4 w-4" /> Edit
-                  </button>
-                )}
+                </div>
+                {!isEditingPricing &&
+                  order.status !== "delivered" &&
+                  order.status !== "cancelled" && (
+                    <button
+                      onClick={handleEditPricing}
+                      className="px-4 py-2 border-2 border-purple-200 rounded-lg hover:bg-purple-50 text-purple-700 font-medium transition-all duration-200 flex items-center gap-2"
+                    >
+                      <Pencil className="h-4 w-4" /> Edit
+                    </button>
+                  )}
               </div>
 
               {isEditingPricing ? (
@@ -821,7 +923,9 @@ function OrderDetails() {
                     </label>
                     <div className="space-y-3">
                       {(pricingForm.items || []).map((item, idx) => {
-                        const lineTotal = (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0);
+                        const lineTotal =
+                          (Number(item.quantity) || 0) *
+                          (Number(item.unitPrice) || 0);
                         return (
                           <div
                             key={idx}
@@ -829,11 +933,14 @@ function OrderDetails() {
                           >
                             <div className="md:col-span-3 flex items-center">
                               <span className="text-sm font-medium text-gray-700 capitalize">
-                                {item.garmentType?.replace("_", " ") || `Item ${idx + 1}`}
+                                {item.garmentType?.replace("_", " ") ||
+                                  `Item ${idx + 1}`}
                               </span>
-            </div>
+                            </div>
                             <div className="md:col-span-2">
-                              <label className="block text-xs text-gray-500 mb-1">Quantity</label>
+                              <label className="block text-xs text-gray-500 mb-1">
+                                Quantity
+                              </label>
                               <input
                                 type="number"
                                 min="0"
@@ -841,17 +948,21 @@ function OrderDetails() {
                                 className="w-full border-2 border-purple-200 rounded-lg px-2 py-1.5 text-sm bg-gray-100 text-gray-600"
                                 value={item.quantity || 0}
                               />
-          </div>
+                            </div>
                             <div className="md:col-span-3">
-                              <label className="block text-xs text-gray-500 mb-1">Cost per Item (₹)</label>
+                              <label className="block text-xs text-gray-500 mb-1">
+                                Cost per Item (₹)
+                              </label>
                               <input
                                 type="number"
                                 min="0"
                                 className="w-full border-2 border-purple-200 rounded-lg px-2 py-1.5 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
                                 value={item.unitPrice || 0}
                                 onChange={(e) => {
-                                  const newUnitPrice = Number(e.target.value) || 0;
-                                  const newLineTotal = (Number(item.quantity) || 0) * newUnitPrice;
+                                  const newUnitPrice =
+                                    Number(e.target.value) || 0;
+                                  const newLineTotal =
+                                    (Number(item.quantity) || 0) * newUnitPrice;
                                   const arr = [...(pricingForm.items || [])];
                                   arr[idx] = {
                                     ...arr[idx],
@@ -864,23 +975,27 @@ function OrderDetails() {
                                   }));
                                 }}
                               />
-              </div>
+                            </div>
                             <div className="md:col-span-3">
-                              <label className="block text-xs text-gray-500 mb-1">Total Cost (₹)</label>
+                              <label className="block text-xs text-gray-500 mb-1">
+                                Total Cost (₹)
+                              </label>
                               <input
                                 type="number"
                                 readOnly
                                 className="w-full border-2 border-purple-200 rounded-lg px-2 py-1.5 text-sm bg-gray-100 text-gray-700 font-medium"
                                 value={lineTotal}
                               />
-          </div>
+                            </div>
                             <div className="md:col-span-1 flex items-end">
-                              <span className="text-xs text-gray-500 mb-1">₹{lineTotal.toLocaleString("en-IN")}</span>
+                              <span className="text-xs text-gray-500 mb-1">
+                                ₹{lineTotal.toLocaleString("en-IN")}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
                   </div>
 
                   {/* Customizations */}
@@ -917,8 +1032,13 @@ function OrderDetails() {
                             className="md:col-span-8 border-2 border-purple-200 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
                             value={item.description}
                             onChange={(e) => {
-                              const arr = [...(pricingForm.customizations || [])];
-                              arr[idx] = { ...arr[idx], description: e.target.value };
+                              const arr = [
+                                ...(pricingForm.customizations || []),
+                              ];
+                              arr[idx] = {
+                                ...arr[idx],
+                                description: e.target.value,
+                              };
                               setPricingForm((p) => ({
                                 ...p,
                                 customizations: arr,
@@ -932,8 +1052,13 @@ function OrderDetails() {
                             className="md:col-span-3 border-2 border-purple-200 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
                             value={item.amount}
                             onChange={(e) => {
-                              const arr = [...(pricingForm.customizations || [])];
-                              arr[idx] = { ...arr[idx], amount: e.target.value };
+                              const arr = [
+                                ...(pricingForm.customizations || []),
+                              ];
+                              arr[idx] = {
+                                ...arr[idx],
+                                amount: e.target.value,
+                              };
                               setPricingForm((p) => ({
                                 ...p,
                                 customizations: arr,
@@ -944,7 +1069,9 @@ function OrderDetails() {
                             type="button"
                             className="md:col-span-1 px-3 py-2 border-2 border-red-200 rounded-lg hover:bg-red-50 text-red-600 font-bold transition-all duration-200 flex items-center justify-center"
                             onClick={() => {
-                              const arr = [...(pricingForm.customizations || [])];
+                              const arr = [
+                                ...(pricingForm.customizations || []),
+                              ];
                               arr.splice(idx, 1);
                               setPricingForm((p) => ({
                                 ...p,
@@ -956,8 +1083,8 @@ function OrderDetails() {
                           </button>
                         </div>
                       ))}
-          </div>
-        </div>
+                    </div>
+                  </div>
 
                   {/* Discount and totals */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
@@ -965,7 +1092,7 @@ function OrderDetails() {
                       <label className="block text-sm text-gray-600 mb-1">
                         Discount type
                       </label>
-                <select
+                      <select
                         className="w-full border-2 border-purple-200 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
                         value={pricingForm.discountType}
                         onChange={(e) =>
@@ -977,7 +1104,7 @@ function OrderDetails() {
                       >
                         <option value="amount">Amount (₹)</option>
                         <option value="percent">Percent (%)</option>
-                </select>
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm text-gray-600 mb-1">
@@ -1016,7 +1143,10 @@ function OrderDetails() {
                           ) *
                           (subtotal / 100)
                         : Number(pricingForm.discountValue) || 0;
-                    const total = Math.max(0, Math.round(subtotal - discountAmt));
+                    const total = Math.max(
+                      0,
+                      Math.round(subtotal - discountAmt)
+                    );
                     return (
                       <div className="mt-4 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-lg p-4 max-w-md ml-auto">
                         <div className="flex items-center justify-between text-sm">
@@ -1038,7 +1168,9 @@ function OrderDetails() {
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-base mt-2">
-                          <span className="text-gray-800 font-semibold">Total</span>
+                          <span className="text-gray-800 font-semibold">
+                            Total
+                          </span>
                           <span className="text-gray-900 font-bold">
                             ₹{total.toLocaleString("en-IN")}
                           </span>
@@ -1048,7 +1180,7 @@ function OrderDetails() {
                   })()}
 
                   <div className="flex items-center justify-end gap-3 mt-6">
-                <button
+                    <button
                       onClick={handleCancelPricing}
                       className="px-6 py-2 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium"
                     >
@@ -1059,7 +1191,7 @@ function OrderDetails() {
                       className="px-6 py-3 bg-gradient-to-r from-accent to-yellow-600 text-primary rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold hover:scale-105"
                     >
                       Save Pricing
-                </button>
+                    </button>
                   </div>
                 </>
               ) : (
@@ -1067,10 +1199,14 @@ function OrderDetails() {
                   {/* Items Pricing Display */}
                   {order.items && order.items.length > 0 && (
                     <div className="mb-4">
-                      <div className="text-sm text-gray-500 mb-2">Items Pricing</div>
+                      <div className="text-sm text-gray-500 mb-2">
+                        Items Pricing
+                      </div>
                       <div className="space-y-2">
                         {order.items.map((item, idx) => {
-                          const lineTotal = item.lineTotal || (item.quantity || 0) * (item.unitPrice || 0);
+                          const lineTotal =
+                            item.lineTotal ||
+                            (item.quantity || 0) * (item.unitPrice || 0);
                           return (
                             <div
                               key={idx}
@@ -1078,13 +1214,20 @@ function OrderDetails() {
                             >
                               <div className="flex-1">
                                 <span className="font-medium text-gray-700 capitalize">
-                                  {item.garmentType?.replace("_", " ") || `Item ${idx + 1}`}
+                                  {item.garmentType?.replace("_", " ") ||
+                                    `Item ${idx + 1}`}
                                 </span>
-                                <span className="text-gray-500 ml-2">(Qty: {item.quantity || 0})</span>
+                                <span className="text-gray-500 ml-2">
+                                  (Qty: {item.quantity || 0})
+                                </span>
                               </div>
                               <div className="flex items-center gap-4">
                                 <span className="text-gray-600">
-                                  ₹{(item.unitPrice || 0).toLocaleString("en-IN")} × {item.quantity || 0}
+                                  ₹
+                                  {(item.unitPrice || 0).toLocaleString(
+                                    "en-IN"
+                                  )}{" "}
+                                  × {item.quantity || 0}
                                 </span>
                                 <span className="font-semibold text-gray-900">
                                   = ₹{lineTotal.toLocaleString("en-IN")}
@@ -1093,24 +1236,28 @@ function OrderDetails() {
                             </div>
                           );
                         })}
-              </div>
-            </div>
-          )}
+                      </div>
+                    </div>
+                  )}
 
                   {order.pricing?.customizations?.length > 0 && (
                     <div className="mb-4">
-                      <div className="text-sm text-gray-500 mb-2">Additional charges</div>
+                      <div className="text-sm text-gray-500 mb-2">
+                        Additional charges
+                      </div>
                       <div className="space-y-1">
                         {order.pricing.customizations.map((c, i) => (
                           <div
                             key={i}
                             className="flex items-center justify-between text-sm"
                           >
-                            <span className="text-gray-600">{c.description || "Customization"}</span>
+                            <span className="text-gray-600">
+                              {c.description || "Customization"}
+                            </span>
                             <span className="font-medium">
                               ₹{(c.amount || 0).toLocaleString("en-IN")}
                             </span>
-              </div>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -1119,7 +1266,10 @@ function OrderDetails() {
                   {(() => {
                     const itemsTotal = (order.items || []).reduce(
                       (sum, it) =>
-                        sum + (it.lineTotal || (Number(it.quantity) || 0) * (Number(it.unitPrice) || 0)),
+                        sum +
+                        (it.lineTotal ||
+                          (Number(it.quantity) || 0) *
+                            (Number(it.unitPrice) || 0)),
                       0
                     );
                     const custom = (order.pricing?.customizations || []).reduce(
@@ -1146,41 +1296,47 @@ function OrderDetails() {
                         {discountAmt > 0 && (
                           <div className="flex items-center justify-between text-sm mt-1">
                             <span className="text-gray-600">
-                              Discount {order.pricing?.discount?.reason ? `(${order.pricing.discount.reason})` : ""}
+                              Discount{" "}
+                              {order.pricing?.discount?.reason
+                                ? `(${order.pricing.discount.reason})`
+                                : ""}
                             </span>
                             <span className="font-medium">
-                              - ₹{Math.round(discountAmt).toLocaleString("en-IN")}
+                              - ₹
+                              {Math.round(discountAmt).toLocaleString("en-IN")}
                             </span>
                           </div>
                         )}
                         <div className="flex items-center justify-between text-base mt-2 border-t border-purple-200 pt-2">
-                          <span className="text-gray-800 font-semibold">Total</span>
+                          <span className="text-gray-800 font-semibold">
+                            Total
+                          </span>
                           <span className="text-gray-900 font-bold">
                             ₹{total.toLocaleString("en-IN")}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t border-purple-200">
-                <span className="text-gray-600">Paid</span>
+                          <span className="text-gray-600">Paid</span>
                           <span className="font-medium text-green-700">
                             ₹{(order.totalPaid || 0).toLocaleString("en-IN")}
                           </span>
-              </div>
+                        </div>
                         <div className="flex items-center justify-between text-sm mt-1">
                           <span className="text-gray-600">Balance Due</span>
                           <span className="font-medium text-orange-700">
                             ₹{(order.balanceDue || 0).toLocaleString("en-IN")}
                           </span>
-              </div>
-            </div>
+                        </div>
+                      </div>
                     );
                   })()}
 
-            <button
-              onClick={() => setShowInvoice(true)}
+                  <button
+                    onClick={() => setShowInvoice(true)}
                     className="mt-4 w-full px-4 py-2 border-2 border-purple-200 rounded-lg hover:bg-purple-50 flex items-center justify-center gap-2 transition-all duration-200"
-            >
-              <ReceiptIndianRupee className="h-4 w-4" /> View Invoice
-            </button>
+                  >
+                    <ReceiptIndianRupee className="h-4 w-4" /> View Invoice
+                  </button>
                 </>
               )}
             </div>
@@ -1190,7 +1346,9 @@ function OrderDetails() {
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative z-10">
               <button
-                onClick={() => setIsStatusHistoryCollapsed(!isStatusHistoryCollapsed)}
+                onClick={() =>
+                  setIsStatusHistoryCollapsed(!isStatusHistoryCollapsed)
+                }
                 className="w-full flex items-center justify-between mb-6 hover:opacity-80 transition-opacity"
               >
                 <h3 className="text-2xl font-heading font-bold text-primary">
@@ -1229,7 +1387,9 @@ function OrderDetails() {
                           </span>
                         </div>
                         {s.notes && (
-                          <span className="text-sm text-gray-500">{s.notes}</span>
+                          <span className="text-sm text-gray-500">
+                            {s.notes}
+                          </span>
                         )}
                       </div>
                     );
@@ -1259,7 +1419,10 @@ function OrderDetails() {
                     </thead>
                     <tbody>
                       {order.items.map((it, i) => (
-                        <tr key={i} className="border-b border-green-100 hover:bg-green-50 transition-all duration-200">
+                        <tr
+                          key={i}
+                          className="border-b border-green-100 hover:bg-green-50 transition-all duration-200"
+                        >
                           <td className="py-2 capitalize">
                             {it.garmentType?.replace("_", " ") || "-"}
                           </td>
@@ -1279,117 +1442,122 @@ function OrderDetails() {
           {(order.balanceDue || 0) > 0 && (
             <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-purple-100 group relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative z-10">
+              <div className="relative z-10">
                 <h3 className="text-2xl font-heading font-bold text-primary mb-6">
                   Record Payment
                 </h3>
-            {paymentError && (
-                <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-                  {paymentError}
+                {paymentError && (
+                  <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                    {paymentError}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Amount (₹)"
+                      className="border-2 border-purple-200 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                      value={payment.amount}
+                      onChange={(e) =>
+                        setPayment((p) => ({ ...p, amount: e.target.value }))
+                      }
+                    />
+                    <input
+                      type="date"
+                      className="border-2 border-purple-200 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                      value={payment.date}
+                      onChange={(e) =>
+                        setPayment((p) => ({ ...p, date: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <select
+                      className="border-2 border-purple-200 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                      value={payment.method}
+                      onChange={(e) =>
+                        setPayment((p) => ({ ...p, method: e.target.value }))
+                      }
+                    >
+                      {["cash", "upi", "card"].map((m) => (
+                        <option key={m} value={m}>
+                          {m.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className="border-2 border-purple-200 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
+                      value={payment.type}
+                      onChange={(e) =>
+                        setPayment((p) => ({ ...p, type: e.target.value }))
+                      }
+                    >
+                      {["advance", "final"].map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Receipt number (optional)"
+                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    value={payment.receiptNumber}
+                    onChange={(e) =>
+                      setPayment((p) => ({
+                        ...p,
+                        receiptNumber: e.target.value,
+                      }))
+                    }
+                  />
+                  <textarea
+                    rows={2}
+                    placeholder="Notes (optional)"
+                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    value={payment.notes}
+                    onChange={(e) =>
+                      setPayment((p) => ({ ...p, notes: e.target.value }))
+                    }
+                  />
+                  <button
+                    onClick={handleAddPayment}
+                    className="w-full px-6 py-3 bg-gradient-to-r from-accent to-yellow-600 text-primary rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold hover:scale-105"
+                  >
+                    Add Payment
+                  </button>
                 </div>
-            )}
-            <div className="grid grid-cols-1 gap-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Amount (₹)"
-                    className="border-2 border-purple-200 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
-                  value={payment.amount}
-                    onChange={(e) =>
-                      setPayment((p) => ({ ...p, amount: e.target.value }))
-                    }
-                />
-                <input
-                  type="date"
-                    className="border-2 border-purple-200 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
-                  value={payment.date}
-                    onChange={(e) =>
-                      setPayment((p) => ({ ...p, date: e.target.value }))
-                    }
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <select
-                    className="border-2 border-purple-200 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
-                  value={payment.method}
-                    onChange={(e) =>
-                      setPayment((p) => ({ ...p, method: e.target.value }))
-                    }
-                  >
-                    {["cash", "upi", "card"].map((m) => (
-                      <option key={m} value={m}>
-                        {m.toUpperCase()}
-                      </option>
-                  ))}
-                </select>
-                <select
-                    className="border-2 border-purple-200 rounded-lg px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-200"
-                  value={payment.type}
-                    onChange={(e) =>
-                      setPayment((p) => ({ ...p, type: e.target.value }))
-                    }
-                  >
-                    {["advance", "final"].map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                  ))}
-                </select>
-              </div>
-              <input
-                type="text"
-                placeholder="Receipt number (optional)"
-                className="border border-gray-300 rounded-lg px-3 py-2"
-                value={payment.receiptNumber}
-                  onChange={(e) =>
-                    setPayment((p) => ({ ...p, receiptNumber: e.target.value }))
-                  }
-              />
-              <textarea
-                rows={2}
-                placeholder="Notes (optional)"
-                className="border border-gray-300 rounded-lg px-3 py-2"
-                value={payment.notes}
-                  onChange={(e) =>
-                    setPayment((p) => ({ ...p, notes: e.target.value }))
-                  }
-              />
-              <button
-                onClick={handleAddPayment}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-accent to-yellow-600 text-primary rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold hover:scale-105"
-              >
-                Add Payment
-              </button>
-            </div>
-            {order.payments?.length > 0 && (
-              <div className="mt-6">
-                  <h4 className="text-sm font-semibold text-primary mb-2">
-                    Payment History
-                  </h4>
-                <div className="space-y-2 text-sm">
-                  {order.payments.map((p, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-2 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-200"
-                      >
-                        <div className="text-gray-700">
-                          ₹{p.amount.toLocaleString("en-IN")}
+                {order.payments?.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-semibold text-primary mb-2">
+                      Payment History
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      {order.payments.map((p, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-200"
+                        >
+                          <div className="text-gray-700">
+                            ₹{p.amount.toLocaleString("en-IN")}
+                          </div>
+                          <div className="text-gray-500">
+                            {new Date(p.date).toLocaleDateString("en-IN")}
+                          </div>
+                          <div className="text-gray-500 capitalize">
+                            {p.method}
+                          </div>
+                          <div className="text-gray-500 capitalize">
+                            {p.type}
+                          </div>
                         </div>
-                        <div className="text-gray-500">
-                          {new Date(p.date).toLocaleDateString("en-IN")}
-                        </div>
-                        <div className="text-gray-500 capitalize">
-                          {p.method}
-                        </div>
-                      <div className="text-gray-500 capitalize">{p.type}</div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
-            )}
             </div>
-          </div>
           )}
         </div>
       </div>

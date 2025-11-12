@@ -30,6 +30,7 @@ function Dashboard() {
   const [overdueOrders, setOverdueOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRevenueHidden, setIsRevenueHidden] = useState(true);
+  const [editingStatusOrderId, setEditingStatusOrderId] = useState(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -338,13 +339,70 @@ function Dashboard() {
                         {formatDate(order.deliveryDate)}
                       </td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(
-                            order.status
-                          )}`}
-                        >
-                          {formatStatus(order.status)}
-                        </span>
+                        {editingStatusOrderId === order.id ? (
+                          <select
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize border-2 focus:outline-none focus:ring-2 ${getStatusColor(
+                              order.status
+                            )}`}
+                            value={order.status}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
+                              if (newStatus !== order.status) {
+                                // If changing to delivered and there's a balance, navigate to order details
+                                if (
+                                  newStatus === "delivered" &&
+                                  (order.balanceDue || 0) > 0
+                                ) {
+                                  setEditingStatusOrderId(null);
+                                  navigate(
+                                    `/orders/details?id=${order.id}&pendingDelivery=true`
+                                  );
+                                  return;
+                                }
+                                await orderService.updateStatus(
+                                  order.id,
+                                  newStatus,
+                                  ""
+                                );
+                                await loadDashboardData();
+                              }
+                              setEditingStatusOrderId(null);
+                            }}
+                            onBlur={() => setEditingStatusOrderId(null)}
+                            autoFocus
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {[
+                              "placed",
+                              "fabric_received",
+                              "cutting",
+                              "stitching",
+                              "trial",
+                              "alterations",
+                              "completed",
+                              "ready",
+                              "delivered",
+                              "cancelled",
+                            ].map((s) => (
+                              <option key={s} value={s}>
+                                {formatStatus(s)}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize cursor-pointer hover:opacity-80 transition-opacity ${getStatusColor(
+                              order.status
+                            )}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingStatusOrderId(order.id);
+                            }}
+                            title="Click to update status"
+                          >
+                            {formatStatus(order.status)}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-sm text-primary text-right font-medium">
                         ₹{order.pricing?.total?.toLocaleString("en-IN") || 0}
