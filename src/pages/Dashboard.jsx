@@ -9,6 +9,8 @@ import {
   AlertCircle,
   ShoppingBag,
   TrendingUp,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import StatCard from "../components/dashboard/StatCard";
@@ -27,6 +29,7 @@ function Dashboard() {
   const [upcomingDeliveries, setUpcomingDeliveries] = useState([]);
   const [overdueOrders, setOverdueOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRevenueHidden, setIsRevenueHidden] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
@@ -193,12 +196,43 @@ function Dashboard() {
           icon={Package}
           color="orange"
         />
-        <StatCard
-          title="Revenue This Month"
-          value={`₹${stats.revenueThisMonth.toLocaleString("en-IN")}`}
-          icon={DollarSign}
-          color="purple"
-        />
+        {/* Revenue Card with Hide/Show functionality */}
+        <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 group relative overflow-hidden">
+          {/* Background gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-yellow-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          {/* Content */}
+          <div className="relative z-10">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-muted">
+                    Revenue/Month
+                  </p>
+                  <button
+                    onClick={() => setIsRevenueHidden(!isRevenueHidden)}
+                    className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                    title={isRevenueHidden ? "Show revenue" : "Hide revenue"}
+                  >
+                    {isRevenueHidden ? (
+                      <EyeOff className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+                <p className="text-3xl md:text-4xl font-heading font-bold text-primary">
+                  {isRevenueHidden
+                    ? "₹" + "*".repeat(6)
+                    : `₹${stats.revenueThisMonth.toLocaleString("en-IN")}`}
+                </p>
+              </div>
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <DollarSign className="w-6 h-6" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Quick Actions */}

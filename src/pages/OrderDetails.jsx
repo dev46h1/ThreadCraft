@@ -295,13 +295,28 @@ function OrderDetails() {
     // Recalculate balance due based on new total
     const newBalanceDue = total - (order.totalPaid || 0);
 
-    await orderService.update(order.id, {
+    // Update payment status based on new balance
+    let paymentStatus = order.paymentStatus;
+    if (newBalanceDue <= 0 && (order.totalPaid || 0) > 0) {
+      paymentStatus = "fully_paid";
+    } else if ((order.totalPaid || 0) > 0 && newBalanceDue > 0) {
+      paymentStatus = "partially_paid";
+    } else {
+      paymentStatus = "not_paid";
+    }
+
+    const updatedOrder = await orderService.update(order.id, {
       items: updatedItems,
       pricing: updatedPricing,
       balanceDue: newBalanceDue,
+      paymentStatus,
     });
 
+    // Update local state immediately for instant UI update
+    setOrder(updatedOrder);
     setIsEditingPricing(false);
+    
+    // Reload to ensure everything is in sync
     await load();
   };
 
@@ -412,17 +427,19 @@ function OrderDetails() {
                 </option>
               ))}
             </select>
-          <button
-            onClick={() => navigate(`/orders/edit?id=${order.id}`)}
-            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
-            title="Edit order"
-          >
+          {order.status !== "delivered" && order.status !== "cancelled" && (
+            <button
+              onClick={() => navigate(`/orders/edit?id=${order.id}`)}
+              className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+              title="Edit order"
+            >
               <Pencil className="h-5 w-5 text-primary" />
-          </button>
+            </button>
+          )}
           </div>
           
           {/* Client Details and Order Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-green-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t border-green-200">
             <div className="flex items-center gap-2 text-sm">
               <User className="h-4 w-4 text-gray-500" />
               <div>
@@ -444,6 +461,13 @@ function OrderDetails() {
             <div className="text-sm">
               <div className="text-gray-500 text-xs">Delivery Date</div>
               <div className="font-medium text-gray-900">{formatDate(order.deliveryDate)}</div>
+            </div>
+            <div className="text-sm">
+              <div className="text-gray-500 text-xs">Payment Amount</div>
+              <div className="font-medium text-gray-900 flex items-center gap-1">
+                <ReceiptIndianRupee className="h-3 w-3 text-gray-400" />
+                ₹{(order.pricing?.total || order.totalPaid || 0).toLocaleString("en-IN")}
+              </div>
             </div>
           </div>
         </div>
@@ -778,7 +802,7 @@ function OrderDetails() {
                     Pricing
                   </h3>
             </div>
-                {!isEditingPricing && (
+                {!isEditingPricing && order.status !== "delivered" && order.status !== "cancelled" && (
                   <button
                     onClick={handleEditPricing}
                     className="px-4 py-2 border-2 border-purple-200 rounded-lg hover:bg-purple-50 text-purple-700 font-medium transition-all duration-200 flex items-center gap-2"
@@ -1251,13 +1275,14 @@ function OrderDetails() {
             </div>
           )}
 
-          {/* Payments */}
-          <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-purple-100 group relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative z-10">
-              <h3 className="text-2xl font-heading font-bold text-primary mb-6">
-                Record Payment
-              </h3>
+          {/* Payments - Only show if there's a balance due */}
+          {(order.balanceDue || 0) > 0 && (
+            <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-purple-100 group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative z-10">
+                <h3 className="text-2xl font-heading font-bold text-primary mb-6">
+                  Record Payment
+                </h3>
             {paymentError && (
                 <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
                   {paymentError}
@@ -1365,6 +1390,7 @@ function OrderDetails() {
             )}
             </div>
           </div>
+          )}
         </div>
       </div>
 
