@@ -156,17 +156,23 @@ function Clients() {
       )}
 
       {/* Colorful Page Header */}
-      <div className="relative overflow-hidden rounded-xl mb-6 border border-sky-200 bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50">
-        <div className="flex items-center justify-between p-6">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900">Clients</h2>
-            <p className="mt-1 text-gray-600">
+      <div className="relative overflow-hidden rounded-2xl mb-6 border-2 border-blue-100 bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 shadow-lg group">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="relative z-10 flex items-center justify-between p-5">
+          <div className="flex items-center gap-3">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-3xl md:text-4xl font-heading font-bold text-primary">Clients</h2>
+            <p className="mt-1 text-base text-muted">
               Manage your client database ({filteredClients.length}{" "}
               {filteredClients.length === 1 ? "client" : "clients"})
             </p>
+            </div>
           </div>
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2 shadow-sm"
+            className="px-6 py-3 bg-gradient-to-r from-accent to-yellow-600 text-primary rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold flex items-center gap-2 hover:scale-105"
             onClick={openAddForm}
           >
             <Plus className="h-5 w-5" />
@@ -176,7 +182,9 @@ function Clients() {
       </div>
 
       {/* Search & Sort */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+      <div className="bg-white p-8 rounded-2xl shadow-lg border-2 border-blue-100 mb-6 group relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="relative z-10">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Search Bar */}
           <div className="flex-1 relative">
@@ -186,14 +194,14 @@ function Clients() {
               placeholder="Search by name, phone, or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
             />
           </div>
 
           {/* Sort Dropdown */}
           <select
             onChange={(e) => handleSort(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            className="px-4 py-2 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all duration-200"
           >
             <option value="">Sort by...</option>
             <option value="name">Name (A-Z)</option>
@@ -201,23 +209,26 @@ function Clients() {
             <option value="registration">Registration Date</option>
           </select>
         </div>
+        </div>
       </div>
 
       {/* Client List */}
       {filteredClients.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg mb-6">
+            <Users className="h-8 w-8" />
+          </div>
+          <h3 className="text-2xl font-heading font-bold text-primary mb-2">
             {searchQuery ? "No clients found" : "No clients yet"}
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-muted mb-6">
             {searchQuery
               ? "Try adjusting your search terms"
               : "Get started by adding your first client"}
           </p>
           {!searchQuery && (
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="px-6 py-3 bg-gradient-to-r from-accent to-yellow-600 text-primary rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold hover:scale-105"
               onClick={openAddForm}
             >
               Add Your First Client
@@ -227,67 +238,70 @@ function Clients() {
       ) : (
         <>
           {/* Client Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {currentClients.map((client) => (
               <div
                 key={client.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer"
+                className="bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-blue-200 hover:border-blue-300 group relative overflow-hidden cursor-pointer"
                 onClick={() => navigate(`/clients/details?id=${client.id}`)}
               >
-                {/* Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {client.name}
-                    </h3>
-                    <p className="text-xs text-gray-500">{client.id}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {client.activeOrders > 0 && (
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                        {client.activeOrders} active
-                      </span>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditForm(client);
-                      }}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="Edit client"
-                    >
-                      <Edit2 className="h-4 w-4 text-gray-600" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Contact Info */}
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <span>{client.phoneNumber}</span>
-                  </div>
-                  {client.address && (
-                    <div className="flex items-start gap-2 text-sm text-gray-600">
-                      <Users className="h-4 w-4 text-gray-400 mt-0.5" />
-                      <span className="line-clamp-1">{client.address}</span>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative z-10">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-heading font-semibold text-primary mb-1 group-hover:text-accent transition-colors">
+                        {client.name}
+                      </h3>
+                      <p className="text-xs text-muted">{client.id}</p>
                     </div>
-                  )}
-                </div>
-
-                {/* Stats */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <Calendar className="h-4 w-4 text-blue-500" />
-                    <span className="text-xs">
-                      {formatDate(client.lastOrderDate)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {client.activeOrders > 0 && (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                          {client.activeOrders} active
+                        </span>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditForm(client);
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Edit client"
+                      >
+                        <Edit2 className="h-4 w-4 text-muted" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <Package className="h-4 w-4 text-purple-500" />
-                    <span className="text-xs">
-                      {client.totalOrders || 0} orders
-                    </span>
+
+                  {/* Contact Info */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-sm text-muted">
+                      <Phone className="h-4 w-4 text-muted" />
+                      <span>{client.phoneNumber}</span>
+                    </div>
+                    {client.address && (
+                      <div className="flex items-start gap-2 text-sm text-muted">
+                        <Users className="h-4 w-4 text-muted mt-0.5" />
+                        <span className="line-clamp-1">{client.address}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-1 text-sm text-muted">
+                      <Calendar className="h-4 w-4 text-blue-500" />
+                      <span className="text-xs">
+                        {formatDate(client.lastOrderDate)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-muted">
+                      <Package className="h-4 w-4 text-purple-500" />
+                      <span className="text-xs">
+                        {client.totalOrders || 0} orders
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -300,7 +314,7 @@ function Clients() {
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 border-2 border-blue-200 rounded-lg hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 Previous
               </button>
@@ -319,10 +333,10 @@ function Clients() {
                       <button
                         key={pageNumber}
                         onClick={() => handlePageChange(pageNumber)}
-                        className={`px-4 py-2 rounded-lg ${
+                        className={`px-4 py-2 rounded-lg transition-colors ${
                           currentPage === pageNumber
-                            ? "bg-blue-600 text-white"
-                            : "border border-gray-300 hover:bg-gray-50"
+                            ? "bg-gradient-to-r from-accent to-yellow-600 text-primary font-semibold shadow-lg"
+                            : "border-2 border-blue-200 hover:bg-blue-50"
                         }`}
                       >
                         {pageNumber}
@@ -345,7 +359,7 @@ function Clients() {
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 border-2 border-blue-200 rounded-lg hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 Next
               </button>

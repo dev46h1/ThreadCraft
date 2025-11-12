@@ -7,6 +7,7 @@ import ClientDetails from "./pages/ClientDetails";
 import Orders from "./pages/Orders";
 import NewOrder from "./pages/NewOrder";
 import OrderDetails from "./pages/OrderDetails";
+import EditOrder from "./pages/EditOrder";
 import Settings from "./pages/Settings";
 import { initDatabase } from "./services/database";
 
@@ -32,6 +33,7 @@ function App() {
           <Route path="orders" element={<Orders />} />
           <Route path="orders/new" element={<NewOrder />} />
           <Route path="orders/details" element={<OrderDetails />} />
+          <Route path="orders/edit" element={<EditOrder />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

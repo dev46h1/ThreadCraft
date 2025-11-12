@@ -13,6 +13,22 @@ db.version(1).stores({
   settings: "key",
 });
 
+// Migration: Update schema to support unified measurements
+db.version(2)
+  .stores({
+    clients:
+      "id, name, phoneNumber, secondaryPhone, registrationDate, lastOrderDate",
+    measurements: "id, clientId, createdAt", // Simplified: one record per client
+    orders: "id, clientId, orderDate, deliveryDate, status, paymentStatus",
+    settings: "key",
+  })
+  .upgrade((tx) => {
+    // Migration logic: combine all measurements per client into one record
+    return tx.measurements.toCollection().modify((measurement) => {
+      // This will be handled by migration function
+    });
+  });
+
 // ==================== CLIENT OPERATIONS ====================
 
 export const clientService = {
@@ -93,49 +109,87 @@ export const clientService = {
 // ==================== MEASUREMENT OPERATIONS ====================
 
 export const measurementService = {
-  // Create new measurement
-  async create(measurementData) {
-    const id = `MEAS-${crypto.randomUUID()}`;
-
-    // Deactivate previous measurements for same client and garment type
-    const existing = await db.measurements
+  // Get or create unified measurement record for a client
+  async getClientMeasurements(clientId) {
+    let measurement = await db.measurements
       .where("clientId")
-      .equals(measurementData.clientId)
-      .filter(
-        (m) => m.garmentType === measurementData.garmentType && m.isActive
-      )
-      .toArray();
+      .equals(clientId)
+      .first();
 
-    for (const m of existing) {
-      await db.measurements.update(m.id, { isActive: false });
+    if (!measurement) {
+      // Create new unified measurement record
+      const id = `MEAS-${crypto.randomUUID()}`;
+      measurement = {
+        id,
+        clientId,
+        measurements: {}, // All measurement values stored here
+        unit: "inches",
+        notes: "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      await db.measurements.add(measurement);
     }
 
-    const measurement = {
-      id,
-      clientId: measurementData.clientId,
-      garmentType: measurementData.garmentType,
-      measurements: measurementData.measurements,
-      unit: measurementData.unit || "inches",
-      notes: measurementData.notes || "",
-      version: existing.length + 1,
-      isActive: true,
-      createdAt: new Date().toISOString(),
+    return measurement;
+  },
+
+  // Update/add measurement values for a client
+  async updateMeasurements(clientId, newMeasurements, unit, notes) {
+    let measurement = await this.getClientMeasurements(clientId);
+
+    // Merge new measurements with existing ones
+    const updatedMeasurements = {
+      ...measurement.measurements,
+      ...newMeasurements,
     };
 
-    await db.measurements.add(measurement);
-    return measurement;
+    // Remove null/undefined/empty values (but keep 0 values as they are valid measurements)
+    Object.keys(updatedMeasurements).forEach((key) => {
+      if (
+        updatedMeasurements[key] === null ||
+        updatedMeasurements[key] === undefined ||
+        updatedMeasurements[key] === ""
+      ) {
+        delete updatedMeasurements[key];
+      }
+    });
+
+    await db.measurements.update(measurement.id, {
+      measurements: updatedMeasurements,
+      unit: unit || measurement.unit,
+      notes: notes !== undefined ? notes : measurement.notes,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return await db.measurements.get(measurement.id);
+  },
+
+  // Create new measurement (adds/updates values)
+  async create(measurementData) {
+    return await this.updateMeasurements(
+      measurementData.clientId,
+      measurementData.measurements,
+      measurementData.unit,
+      measurementData.notes
+    );
   },
 
   // Get measurements by client ID
   async getByClientId(clientId) {
-    return await db.measurements.where("clientId").equals(clientId).toArray();
+    const measurement = await this.getClientMeasurements(clientId);
+    return measurement ? [measurement] : [];
   },
 
-  // Get active measurements by client and garment type
+  // Get active measurements by client and garment type (for backward compatibility)
   async getActive(clientId, garmentType) {
-    return await db.measurements
-      .where({ clientId, garmentType, isActive: true })
-      .first();
+    const measurement = await this.getClientMeasurements(clientId);
+    // Return a virtual measurement object for the garment type
+    return {
+      ...measurement,
+      garmentType,
+      measurements: measurement.measurements,
+    };
   },
 
   // Get measurement by ID
@@ -154,12 +208,10 @@ export const measurementService = {
     await db.measurements.delete(id);
   },
 
-  // Get measurement history
+  // Get measurement history (for backward compatibility - returns current measurement)
   async getHistory(clientId, garmentType) {
-    return await db.measurements
-      .where({ clientId, garmentType })
-      .reverse()
-      .sortBy("version");
+    const measurement = await this.getClientMeasurements(clientId);
+    return measurement ? [measurement] : [];
   },
 };
 
@@ -186,6 +238,7 @@ export const orderService = {
       priority: orderData.priority || "normal",
       garmentType: orderData.garmentType,
       quantity: orderData.quantity || 1,
+      items: orderData.items || [], // New items array structure
       fabricDetails: orderData.fabricDetails || {},
       designDetails: orderData.designDetails || {},
       measurementId: orderData.measurementId,
@@ -200,10 +253,8 @@ export const orderService = {
         },
       ],
       pricing: orderData.pricing || {
-        baseCharge: 0,
+        itemsTotal: 0,
         customizations: [],
-        materialCharges: 0,
-        urgentCharges: 0,
         subtotal: 0,
         discount: { amount: 0, reason: "" },
         total: 0,
@@ -521,34 +572,48 @@ export const seedDatabase = async () => {
     "churidar"
   );
 
-  await orderService.create({
-    clientId: client1.id,
-    clientName: client1.name,
-    clientPhone: client1.phoneNumber,
-    deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    garmentType: "churidar",
-    measurementId: measurement.id,
-    measurementSnapshot: measurement.measurements,
-    fabricDetails: {
-      type: "Cotton",
-      providedBy: "client",
-    },
-    designDetails: {
-      description: "Simple churidar with embroidery on sleeves",
-    },
-    pricing: {
-      baseCharge: 800,
-      customizations: [
-        { description: "Embroidery on sleeves", amount: 200 },
-        { description: "Lining", amount: 100 },
+  // Only create order if measurement exists
+  if (measurement) {
+    await orderService.create({
+      clientId: client1.id,
+      clientName: client1.name,
+      clientPhone: client1.phoneNumber,
+      orderDate: new Date().toISOString(),
+      deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      priority: "normal",
+      items: [
+        {
+          garmentType: "churidar",
+          quantity: 1,
+          unitPrice: 800,
+          lineTotal: 800,
+          measurementId: measurement.id,
+          measurementSnapshot: measurement.measurements,
+        },
       ],
-      materialCharges: 0,
-      urgentCharges: 0,
-      subtotal: 1100,
-      discount: { amount: 0, reason: "" },
-      total: 1100,
-    },
-  });
+      garmentType: "churidar",
+      quantity: 1,
+      fabricDetails: {
+        type: "Cotton",
+        providedBy: "client",
+      },
+      designDetails: {
+        description: "Simple churidar with embroidery on sleeves",
+      },
+      measurementId: measurement.id,
+      measurementSnapshot: measurement.measurements,
+      pricing: {
+        itemsTotal: 800,
+        customizations: [
+          { description: "Embroidery on sleeves", amount: 200 },
+          { description: "Lining", amount: 100 },
+        ],
+        subtotal: 1100,
+        discount: { amount: 0, reason: "" },
+        total: 1100,
+      },
+    });
+  }
 
   // Add settings
   await settingsService.set("businessName", "ThreadCraft Tailoring");

@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { X, AlertCircle, CheckCircle } from "lucide-react";
+import {
+  X,
+  AlertCircle,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  User,
+} from "lucide-react";
 
 function ClientForm({
   isOpen,
@@ -20,6 +27,7 @@ function ClientForm({
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
 
   // Populate form if editing
   useEffect(() => {
@@ -32,8 +40,18 @@ function ClientForm({
         email: editClient.email || "",
         notes: editClient.notes || "",
       });
+      // Auto-expand more details if editing and has additional info
+      if (
+        editClient.secondaryPhone ||
+        editClient.address ||
+        editClient.email ||
+        editClient.notes
+      ) {
+        setShowMoreDetails(true);
+      }
     } else {
       resetForm();
+      setShowMoreDetails(false);
     }
   }, [editClient, isOpen]);
 
@@ -48,6 +66,7 @@ function ClientForm({
     });
     setErrors({});
     setDuplicateWarning(false);
+    setShowMoreDetails(false);
   };
 
   const handleChange = (e) => {
@@ -159,25 +178,30 @@ function ClientForm({
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border-2 border-blue-100">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {editClient ? "Edit Client" : "Add New Client"}
-          </h2>
+        <div className="flex items-center justify-between p-8 border-b-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center gap-3">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+              <User className="w-5 h-5" />
+            </div>
+            <h2 className="text-3xl font-heading font-bold text-primary">
+              {editClient ? "Edit Client" : "Add New Client"}
+            </h2>
+          </div>
           <button
             onClick={() => {
               onClose();
               resetForm();
             }}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/60 rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-gray-500" />
+            <X className="h-5 w-5 text-primary" />
           </button>
         </div>
 
         {/* Form */}
-        <div className="p-6 space-y-5">
+        <div className="p-8 space-y-6">
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -188,8 +212,8 @@ function ClientForm({
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.name ? "border-red-500" : "border-gray-300"
+              className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                errors.name ? "border-red-500 focus:border-red-500" : "border-blue-200 focus:border-blue-500"
               }`}
               placeholder="Enter client's full name"
             />
@@ -212,10 +236,10 @@ function ClientForm({
               value={formData.phoneNumber}
               onChange={handleChange}
               maxLength={10}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
                 errors.phoneNumber || duplicateWarning
-                  ? "border-red-500"
-                  : "border-gray-300"
+                  ? "border-red-500 focus:border-red-500"
+                  : "border-blue-200 focus:border-blue-500"
               }`}
               placeholder="10-digit mobile number"
             />
@@ -233,92 +257,116 @@ function ClientForm({
             )}
           </div>
 
-          {/* Secondary Phone */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Secondary Phone (Optional)
-            </label>
-            <input
-              type="tel"
-              name="secondaryPhone"
-              value={formData.secondaryPhone}
-              onChange={handleChange}
-              maxLength={10}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.secondaryPhone ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="Alternate contact number"
-            />
-            {errors.secondaryPhone && (
-              <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
-                {errors.secondaryPhone}
-              </p>
+          {/* More Details Collapsible Section */}
+          <div className="border-t-2 border-blue-200 pt-6">
+            <button
+              type="button"
+              onClick={() => setShowMoreDetails(!showMoreDetails)}
+              className="w-full flex items-center justify-between text-left mb-4 hover:text-accent transition-colors"
+            >
+              <h3 className="text-lg font-semibold text-primary">
+                More Details
+              </h3>
+              {showMoreDetails ? (
+                <ChevronUp className="h-5 w-5 text-muted" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted" />
+              )}
+            </button>
+
+            {showMoreDetails && (
+              <div className="space-y-6 animate-in slide-in-from-top-2 duration-200">
+                {/* Secondary Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Secondary Phone (Optional)
+                  </label>
+                  <input
+                    type="tel"
+                    name="secondaryPhone"
+                    value={formData.secondaryPhone}
+                    onChange={handleChange}
+                    maxLength={10}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      errors.secondaryPhone
+                        ? "border-red-500 focus:border-red-500"
+                        : "border-blue-200 focus:border-blue-500"
+                    }`}
+                    placeholder="Alternate contact number"
+                  />
+                  {errors.secondaryPhone && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.secondaryPhone}
+                    </p>
+                  )}
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Address (Recommended)
+                  </label>
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder="Enter full address"
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email (Optional)
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
+                      errors.email ? "border-red-500 focus:border-red-500" : "border-blue-200 focus:border-blue-500"
+                    }`}
+                    placeholder="client@example.com"
+                  />
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.email}
+                    </p>
+                  )}
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes / Preferences (Optional)
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleChange}
+                    rows={3}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder="E.g., Prefers cotton fabrics, size adjustments needed"
+                  />
+                </div>
+              </div>
             )}
-          </div>
-
-          {/* Address */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Address (Recommended)
-            </label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter full address"
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email (Optional)
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.email ? "border-red-500" : "border-gray-300"
-              }`}
-              placeholder="client@example.com"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
-                {errors.email}
-              </p>
-            )}
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes / Preferences (Optional)
-            </label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="E.g., Prefers cotton fabrics, size adjustments needed"
-            />
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 pt-6 border-t-2 border-blue-200">
             <button
               type="button"
               onClick={() => {
                 onClose();
                 resetForm();
               }}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-6 py-3 border-2 border-blue-200 text-primary rounded-lg hover:bg-blue-50 transition-all duration-200 font-medium"
             >
               Cancel
             </button>
@@ -326,11 +374,11 @@ function ClientForm({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-accent to-yellow-600 text-primary rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:scale-105 disabled:hover:scale-100"
             >
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
                   Saving...
                 </>
               ) : (

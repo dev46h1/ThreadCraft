@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Package, Users, Home, DollarSign } from "lucide-react";
+import {
+  Package,
+  Users,
+  Home,
+  DollarSign,
+  Plus,
+  Clock,
+  AlertCircle,
+  ShoppingBag,
+  TrendingUp,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import StatCard from "../components/dashboard/StatCard";
 import QuickActionButton from "../components/dashboard/QuickActionButton";
@@ -63,7 +73,8 @@ function Dashboard() {
       const upcoming = orders
         .filter((o) => {
           if (!o.deliveryDate) return false;
-          if (o.status === "delivered" || o.status === "cancelled") return false;
+          if (o.status === "delivered" || o.status === "cancelled")
+            return false;
           const d = new Date(o.deliveryDate);
           return d >= todayDate && d <= weekAhead;
         })
@@ -74,7 +85,8 @@ function Dashboard() {
       const overdue = orders
         .filter((o) => {
           if (!o.deliveryDate) return false;
-          if (o.status === "delivered" || o.status === "cancelled") return false;
+          if (o.status === "delivered" || o.status === "cancelled")
+            return false;
           return new Date(o.deliveryDate) < new Date();
         })
         .sort((a, b) => new Date(a.deliveryDate) - new Date(b.deliveryDate))
@@ -141,11 +153,24 @@ function Dashboard() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
-        <p className="mt-2 text-gray-600">
-          Welcome to ThreadCraft - Your Tailoring Business Manager
-        </p>
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-4xl md:text-5xl font-heading font-bold text-primary">
+              Dashboard
+            </h2>
+            <p className="mt-2 text-lg text-muted">
+              Welcome to ThreadCraft - Your Tailoring Business Manager
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/orders/new")}
+            className="px-6 py-3 bg-gradient-to-r from-accent to-yellow-600 text-primary rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-semibold flex items-center gap-2 hover:scale-105"
+          >
+            <Plus className="h-5 w-5" />
+            Create Order
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -177,174 +202,234 @@ function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <QuickActionButton
-            icon={Users}
-            title="Add New Client"
-            description="Register a new client"
-            color="blue"
-            onClick={() => navigate("/clients")}
-          />
-          <QuickActionButton
-            icon={Package}
-            title="Create Order"
-            description="Start a new order"
-            color="green"
-            onClick={() => navigate("/orders")}
-          />
-          <QuickActionButton
-            icon={Users}
-            title="Search Client"
-            description="Find existing client"
-            color="purple"
-            onClick={() => navigate("/clients")}
-          />
+      <div className="mt-8 bg-white p-8 rounded-2xl shadow-lg border border-teal-100 group relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-cyan-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white shadow-lg">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+            <h3 className="text-2xl font-heading font-bold text-primary">
+              Quick Actions
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <QuickActionButton
+              icon={Users}
+              title="Add New Client"
+              description="Register a new client"
+              color="blue"
+              onClick={() => navigate("/clients")}
+            />
+            <QuickActionButton
+              icon={Package}
+              title="Create Order"
+              description="Start a new order"
+              color="green"
+              onClick={() => navigate("/orders")}
+            />
+            <QuickActionButton
+              icon={Users}
+              title="Search Client"
+              description="Find existing client"
+              color="purple"
+              onClick={() => navigate("/clients")}
+            />
+          </div>
         </div>
       </div>
 
       {/* Recent Orders */}
       {recentOrders.length > 0 && (
-        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Recent Orders
-            </h3>
-            <button
-              onClick={() => navigate("/orders")}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              View All →
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Order ID
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Client
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Garment
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Delivery Date
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Status
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                    Amount
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentOrders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/orders/details?id=${order.id}`)}
-                  >
-                    <td className="py-3 px-4 text-sm text-gray-900">
-                      {order.id}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-900">
-                      {order.clientName}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-600 capitalize">
-                      {order.garmentType}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">
-                      {formatDate(order.deliveryDate)}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(
-                          order.status
-                        )}`}
-                      >
-                        {formatStatus(order.status)}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-900 text-right font-medium">
-                      ₹{order.pricing?.total?.toLocaleString("en-IN") || 0}
-                    </td>
+        <div className="mt-8 bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-blue-100 group relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+                  <ShoppingBag className="w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-heading font-bold text-primary">
+                  Recent Orders
+                </h3>
+              </div>
+              <button
+                onClick={() => navigate("/orders")}
+                className="text-sm text-accent hover:text-accent/80 font-medium transition-colors"
+              >
+                View All →
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-blue-200 bg-blue-50">
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-primary">
+                      Order ID
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-primary">
+                      Client
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-primary">
+                      Garment
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-primary">
+                      Delivery Date
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-primary">
+                      Status
+                    </th>
+                    <th className="text-right py-3 px-4 text-sm font-semibold text-primary">
+                      Amount
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {recentOrders.map((order) => (
+                    <tr
+                      key={order.id}
+                      className="border-b border-blue-100 hover:bg-blue-50 cursor-pointer transition-all duration-200"
+                      onClick={() => navigate(`/orders/details?id=${order.id}`)}
+                    >
+                      <td className="py-3 px-4 text-sm text-primary">
+                        {order.id}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-primary">
+                        {order.clientName}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-muted capitalize">
+                        {order.garmentType}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-muted">
+                        {formatDate(order.deliveryDate)}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(
+                            order.status
+                          )}`}
+                        >
+                          {formatStatus(order.status)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-sm text-primary text-right font-medium">
+                        ₹{order.pricing?.total?.toLocaleString("en-IN") || 0}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
       {/* Upcoming Deliveries & Overdue */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Upcoming Deliveries (7 days)</h3>
-            <button
-              onClick={() => navigate("/orders")}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              View Orders →
-            </button>
-          </div>
-          {upcomingDeliveries.length === 0 ? (
-            <p className="text-sm text-gray-500">No deliveries due in the next week.</p>
-          ) : (
-            <div className="space-y-2">
-              {upcomingDeliveries.map((o) => (
-                <div
-                  key={o.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer"
-                  onClick={() => navigate(`/orders/details?id=${o.id}`)}
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">{o.clientName}</p>
-                    <p className="text-xs text-gray-600">{o.garmentType} • {o.id}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-900">{formatDate(o.deliveryDate)}</p>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(o.status)}`}>{formatStatus(o.status)}</span>
-                  </div>
+        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-orange-100 group relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white shadow-lg">
+                  <Clock className="w-6 h-6" />
                 </div>
-              ))}
+                <h3 className="text-2xl font-heading font-bold text-primary">
+                  Upcoming Deliveries (7 days)
+                </h3>
+              </div>
+              <button
+                onClick={() => navigate("/orders")}
+                className="text-sm text-accent hover:text-accent/80 font-medium transition-colors"
+              >
+                View Orders →
+              </button>
             </div>
-          )}
+            {upcomingDeliveries.length === 0 ? (
+              <p className="text-sm text-muted">
+                No deliveries due in the next week.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {upcomingDeliveries.map((o) => (
+                  <div
+                    key={o.id}
+                    className="flex items-center justify-between p-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl hover:from-orange-100 hover:to-red-100 cursor-pointer transition-all duration-200 border-2 border-orange-200 hover:border-orange-300"
+                    onClick={() => navigate(`/orders/details?id=${o.id}`)}
+                  >
+                    <div>
+                      <p className="font-medium text-primary">{o.clientName}</p>
+                      <p className="text-xs text-muted">
+                        {o.garmentType} • {o.id}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-primary">
+                        {formatDate(o.deliveryDate)}
+                      </p>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(
+                          o.status
+                        )}`}
+                      >
+                        {formatStatus(o.status)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Overdue Orders</h3>
-            <span className="text-sm font-semibold text-red-600">{overdueOrders.length}</span>
-          </div>
-          {overdueOrders.length === 0 ? (
-            <p className="text-sm text-gray-500">No overdue orders. Great!</p>
-          ) : (
-            <div className="space-y-2">
-              {overdueOrders.map((o) => (
-                <div
-                  key={o.id}
-                  className="flex items-center justify-between p-3 bg-red-50 rounded-lg hover:bg-red-100 cursor-pointer"
-                  onClick={() => navigate(`/orders/details?id=${o.id}`)}
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">{o.clientName}</p>
-                    <p className="text-xs text-gray-600">{o.garmentType} • {o.id}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-red-700">Due {formatDate(o.deliveryDate)}</p>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(o.status)}`}>{formatStatus(o.status)}</span>
-                  </div>
+        <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-red-100 group relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 text-white shadow-lg">
+                  <AlertCircle className="w-6 h-6" />
                 </div>
-              ))}
+                <h3 className="text-2xl font-heading font-bold text-primary">
+                  Overdue Orders
+                </h3>
+              </div>
+              <span className="text-sm font-semibold text-red-600">
+                {overdueOrders.length}
+              </span>
             </div>
-          )}
+            {overdueOrders.length === 0 ? (
+              <p className="text-sm text-muted">No overdue orders. Great!</p>
+            ) : (
+              <div className="space-y-3">
+                {overdueOrders.map((o) => (
+                  <div
+                    key={o.id}
+                    className="flex items-center justify-between p-4 bg-gradient-to-br from-red-50 to-pink-50 rounded-xl hover:from-red-100 hover:to-pink-100 cursor-pointer transition-all duration-200 border-2 border-red-200 hover:border-red-300"
+                    onClick={() => navigate(`/orders/details?id=${o.id}`)}
+                  >
+                    <div>
+                      <p className="font-medium text-primary">{o.clientName}</p>
+                      <p className="text-xs text-muted">
+                        {o.garmentType} • {o.id}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-red-700">
+                        Due {formatDate(o.deliveryDate)}
+                      </p>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(
+                          o.status
+                        )}`}
+                      >
+                        {formatStatus(o.status)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
