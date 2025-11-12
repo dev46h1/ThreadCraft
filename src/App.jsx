@@ -9,6 +9,7 @@ import NewOrder from "./pages/NewOrder";
 import OrderDetails from "./pages/OrderDetails";
 import EditOrder from "./pages/EditOrder";
 import Settings from "./pages/Settings";
+import Rates from "./pages/Rates";
 import { initDatabase } from "./services/database";
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
           <Route path="orders/new" element={<NewOrder />} />
           <Route path="orders/details" element={<OrderDetails />} />
           <Route path="orders/edit" element={<EditOrder />} />
+          <Route path="rates" element={<Rates />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

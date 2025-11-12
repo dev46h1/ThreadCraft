@@ -3,6 +3,7 @@ import {
   Home,
   Users,
   Package,
+  DollarSign,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -16,6 +17,7 @@ function Sidebar({ isOpen, onToggle }) {
     { name: "Dashboard", path: "/", icon: Home },
     { name: "Clients", path: "/clients", icon: Users },
     { name: "Orders", path: "/orders", icon: Package },
+    { name: "Rates", path: "/rates", icon: DollarSign },
     { name: "Settings", path: "/settings", icon: Settings },
   ];
 

@@ -3,6 +3,7 @@ import {
   clientService,
   measurementService,
   orderService,
+  ratesService,
 } from "../../services/database";
 import ClientForm from "../clients/ClientForm";
 import MeasurementForm from "../measurements/MeasurementForm";
@@ -191,6 +192,16 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
 
   useEffect(() => {
     loadClients();
+  }, []);
+
+  // Load rates when component mounts
+  const [rates, setRates] = useState({});
+  useEffect(() => {
+    const loadRates = async () => {
+      const allRates = await ratesService.getAll();
+      setRates(allRates);
+    };
+    loadRates();
   }, []);
 
   const loadClients = () => {
@@ -484,12 +495,17 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
                       <select
                         className="md:col-span-5 border-2 border-green-200 rounded-lg px-3 py-2 capitalize focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-200"
                         value={it.garmentType}
-                        onChange={(e) => {
+                        onChange={async (e) => {
+                          const newGarmentType = e.target.value;
+                          const rate = rates[newGarmentType] || 0;
                           const arr = [...(form.items || [])];
+                          const quantity = Number(arr[idx].quantity) || 1;
                           arr[idx] = {
                             ...arr[idx],
-                            garmentType: e.target.value,
+                            garmentType: newGarmentType,
                             measurementId: "",
+                            unitPrice: rate,
+                            lineTotal: rate * quantity,
                           };
                           setForm((p) => ({ ...p, items: arr }));
                         }}
@@ -507,8 +523,14 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
                         placeholder="Quantity"
                         value={it.quantity}
                         onChange={(e) => {
+                          const quantity = Number(e.target.value) || 0;
                           const arr = [...(form.items || [])];
-                          arr[idx] = { ...arr[idx], quantity: e.target.value };
+                          const unitPrice = arr[idx].unitPrice || 0;
+                          arr[idx] = {
+                            ...arr[idx],
+                            quantity: e.target.value,
+                            lineTotal: unitPrice * quantity,
+                          };
                           setForm((p) => ({ ...p, items: arr }));
                         }}
                       />
@@ -731,21 +753,23 @@ function OrderForm({ isOpen = true, onClose, onSuccess, defaultClientId }) {
               <button
                 type="button"
                 className="px-4 py-2 rounded-lg text-sm bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 shadow-md hover:shadow-lg transition-all duration-300 font-semibold flex items-center gap-2 hover:scale-105"
-                onClick={() =>
+                onClick={() => {
+                  const defaultGarmentType = "shirt";
+                  const rate = rates[defaultGarmentType] || 0;
                   setForm((p) => ({
                     ...p,
                     items: [
                       ...(p.items || []),
                       {
-                        garmentType: "shirt",
+                        garmentType: defaultGarmentType,
                         quantity: 1,
-                        unitPrice: 0,
-                        lineTotal: 0,
+                        unitPrice: rate,
+                        lineTotal: rate,
                         measurementId: "",
                       },
                     ],
-                  }))
-                }
+                  }));
+                }}
               >
                 <Plus className="h-4 w-4" />
                 Add item

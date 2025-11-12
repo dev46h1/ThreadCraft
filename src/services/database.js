@@ -29,6 +29,16 @@ db.version(2)
     });
   });
 
+// Migration: Add rates table
+db.version(3).stores({
+  clients:
+    "id, name, phoneNumber, secondaryPhone, registrationDate, lastOrderDate",
+  measurements: "id, clientId, createdAt",
+  orders: "id, clientId, orderDate, deliveryDate, status, paymentStatus",
+  settings: "key",
+  rates: "garmentType", // garmentType as primary key
+});
+
 // ==================== CLIENT OPERATIONS ====================
 
 export const clientService = {
@@ -451,6 +461,39 @@ export const settingsService = {
   },
 };
 
+// ==================== RATES OPERATIONS ====================
+
+export const ratesService = {
+  // Set rate for a garment type
+  async setRate(garmentType, rate) {
+    await db.rates.put({
+      garmentType,
+      rate: Number(rate) || 0,
+      updatedAt: new Date().toISOString(),
+    });
+  },
+
+  // Get rate for a garment type
+  async getRate(garmentType, defaultValue = 0) {
+    const rate = await db.rates.get(garmentType);
+    return rate ? rate.rate : defaultValue;
+  },
+
+  // Get all rates
+  async getAll() {
+    const rates = await db.rates.toArray();
+    return rates.reduce((acc, { garmentType, rate }) => {
+      acc[garmentType] = rate;
+      return acc;
+    }, {});
+  },
+
+  // Delete a rate
+  async delete(garmentType) {
+    await db.rates.delete(garmentType);
+  },
+};
+
 // ==================== UTILITY OPERATIONS ====================
 
 export const dbUtils = {
@@ -469,6 +512,7 @@ export const dbUtils = {
       measurements: await db.measurements.toArray(),
       orders: await db.orders.toArray(),
       settings: await db.settings.toArray(),
+      rates: await db.rates.toArray(),
       exportDate: new Date().toISOString(),
     };
   },
@@ -477,12 +521,13 @@ export const dbUtils = {
   async importData(data) {
     await db.transaction(
       "rw",
-      [db.clients, db.measurements, db.orders, db.settings],
+      [db.clients, db.measurements, db.orders, db.settings, db.rates],
       async () => {
         if (data.clients) await db.clients.bulkPut(data.clients);
         if (data.measurements) await db.measurements.bulkPut(data.measurements);
         if (data.orders) await db.orders.bulkPut(data.orders);
         if (data.settings) await db.settings.bulkPut(data.settings);
+        if (data.rates) await db.rates.bulkPut(data.rates);
       }
     );
   },
@@ -579,7 +624,9 @@ export const seedDatabase = async () => {
       clientName: client1.name,
       clientPhone: client1.phoneNumber,
       orderDate: new Date().toISOString(),
-      deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      deliveryDate: new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ).toISOString(),
       priority: "normal",
       items: [
         {
